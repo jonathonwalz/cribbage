@@ -31,7 +31,7 @@ const createRoom = (id = uuid()) => {
   let cut;
   let crib;
   let play;
-  let phase = 'crib';
+  let phase;
   function shuffleDeck () {
     // TODO: Use better shuffle
     deck = [...baseDeck];
@@ -40,6 +40,7 @@ const createRoom = (id = uuid()) => {
     hands = {};
     play = [];
     cut = null;
+    phase = 'crib';
   }
   shuffleDeck();
 
