@@ -1,0 +1,16 @@
+.hand {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.hand li {
+  display: inline-block;
+  margin: 0;
+  padding: 0;
+}
+
+.card {
+  margin: 0 12px;
+  width: 200px;
+}
