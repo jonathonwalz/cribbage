@@ -163,7 +163,7 @@ const createRoom = (id = uuid()) => {
           otherConn.write(JSON.stringify({ type: 'hand', user: otherUser, cards: hands[otherUser] || [], room: id }));
           for (const [otherOtherConn, otherOtherUser] of connectionMap) {
             if (otherOtherUser !== otherUser) {
-              otherOtherConn.write(JSON.stringify({ type: 'hand', user: otherOtherUser, count: (hands[otherOtherUser] || []).length, room: id }));
+              otherOtherConn.write(JSON.stringify({ type: 'hand', user: otherUser, count: (hands[otherUser] || []).length, room: id }));
             }
           }
           otherConn.write(JSON.stringify({ type: 'deck', room: id, deck: deck.length }));
