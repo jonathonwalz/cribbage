@@ -13,6 +13,8 @@ export function Card ({ suit, value }) {
     case 13:
       value = 'king';
       break;
+    default:
+      break;
   }
 
   return (

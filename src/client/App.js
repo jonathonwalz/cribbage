@@ -10,7 +10,6 @@ import './App.css';
 
 import { SocketProvider } from './Socket';
 import { Room } from './Room';
-// import { Echo } from './Echo';
 import { Game } from './Game';
 
 function GameRoom ({ match: { params } }) {
@@ -21,8 +20,8 @@ function GameRoom ({ match: { params } }) {
   }
 
   return (
-    <Room room={params.room || 'room'} user={user}>
-      <Game room={params.room || 'room'} user={user} />
+    <Room room={params.room} user={user}>
+      <Game room={params.room} user={user} />
     </Room>
   );
 }

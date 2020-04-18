@@ -1,7 +1,11 @@
 const http = require('http');
+const path = require('path');
+const staticServer = require('node-static');
 const sockjs = require('sockjs');
 const { v4: uuid } = require('uuid');
 const shuffle = require('knuth-shuffle-seeded');
+
+const fileServer = new staticServer.Server(path.join(__dirname, '../../build'));
 
 const sockjsOpts = {
   sockjs_url: 'https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js',
@@ -78,6 +82,7 @@ const createRoom = (id = uuid()) => {
         for (const [otherConn] of connectionMap) {
           otherConn.write(JSON.stringify({ type: 'shuffle', room: id }));
           otherConn.write(JSON.stringify({ type: 'deck', room: id, deck: deck.length }));
+          otherConn.write(JSON.stringify({ type: 'cut', room: id, card: cut }));
         }
       } else if (message.type === 'cut') {
         cut = deck.pop();
@@ -138,6 +143,10 @@ sockjsServer.on('connection', conn => {
   conn.on('close', () => {});
 });
 
-const server = http.createServer();
+const server = http.createServer((request, response) => {
+  request.addListener('end', () => {
+    fileServer.serve(request, response);
+  }).resume();
+});
 sockjsServer.installHandlers(server);
-server.listen(process.env.PORT || 9999, '127.0.0.1');
+server.listen(process.env.PORT || 9999, '0.0.0.0');

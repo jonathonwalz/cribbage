@@ -5,6 +5,7 @@
   "license": "MIT",
   "dependencies": {
     "knuth-shuffle-seeded": "^1.0.6",
+    "node-static": "^0.7.11",
     "sockjs": "^0.3.20",
     "uuid": "^7.0.3"
   },
@@ -14,6 +15,7 @@
     "@testing-library/user-event": "^7.2.1",
     "js-cookie": "^2.2.1",
     "react": "^16.13.1",
+    "react-app-polyfill": "^1.0.6",
     "react-dom": "^16.13.1",
     "react-router-dom": "^5.1.2",
     "react-scripts": "3.4.1",
