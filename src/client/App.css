@@ -14,3 +14,23 @@
   margin: 0 12px;
   width: 200px;
 }
+
+.hand label {
+  cursor: pointer;
+}
+
+.hand label input[type=radio] {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.hand label input[type=radio]:checked + .card {
+  outline: 7px solid #33aa33;
+}
+
+button.play {
+  font-size: 2rem;
+  margin-top: 42px;
+}

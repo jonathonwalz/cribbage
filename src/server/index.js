@@ -23,16 +23,22 @@ for (const suit of ['club', 'diamond', 'heart', 'spade']) {
 const rooms = new Map();
 const createRoom = (id = uuid()) => {
   const connectionMap = new Map();
+  const userInfo = {};
   let roomTimeout;
 
   let deck;
   let hands;
   let cut;
+  let crib;
+  let play;
+  let phase = 'crib';
   function shuffleDeck () {
     // TODO: Use better shuffle
     deck = [...baseDeck];
+    crib = [];
     shuffle(deck);
     hands = {};
+    play = [];
     cut = null;
   }
   shuffleDeck();
@@ -45,7 +51,7 @@ const createRoom = (id = uuid()) => {
       connectionMap.delete(conn);
       const users = [...new Set(connectionMap.values())];
       for (const [otherConn] of connectionMap) {
-        otherConn.write(JSON.stringify({ type: 'users', users, room: id }));
+        otherConn.write(JSON.stringify({ type: 'users', users, userInfo, room: id }));
       }
       if (!connectionMap.size) {
         roomTimeout = setTimeout(() => {
@@ -77,12 +83,21 @@ const createRoom = (id = uuid()) => {
         for (const [otherConn] of connectionMap) {
           otherConn.write(data);
         }
+      } else if (message.type === 'userInfo') {
+        userInfo[user] = message.info;
+        for (const [otherConn] of connectionMap) {
+          otherConn.write(JSON.stringify({ type: 'users', users, userInfo, room: id }));
+        }
       } else if (message.type === 'shuffle') {
         shuffleDeck();
         for (const [otherConn] of connectionMap) {
           otherConn.write(JSON.stringify({ type: 'shuffle', room: id }));
           otherConn.write(JSON.stringify({ type: 'deck', room: id, deck: deck.length }));
           otherConn.write(JSON.stringify({ type: 'cut', room: id, card: cut }));
+
+          otherConn.write(JSON.stringify({ type: 'play', room: id, cards: play }));
+          otherConn.write(JSON.stringify({ type: 'crib', room: id, count: crib.length, cards: phase === 'count' ? crib : undefined }));
+          otherConn.write(JSON.stringify({ type: 'phase', room: id, phase }));
         }
       } else if (message.type === 'cut') {
         cut = deck.pop();
@@ -103,16 +118,72 @@ const createRoom = (id = uuid()) => {
           }
           otherConn.write(JSON.stringify({ type: 'deck', room: id, deck: deck.length }));
         }
+      } else if (message.type === 'play') {
+        if (phase === 'crib' && crib.some(c => c.user === user)) {
+          return;
+        }
+
+        const hand = hands[user] || [];
+        let card;
+        for (let i = 0; i < hand.length; i++) {
+          if (hand[i].suit === message.card.suit && hand[i].value === message.card.value) {
+            card = hand[i];
+            hand.splice(i, 1);
+            if (phase === 'crib') {
+              crib.push({ card, user });
+            } else if (phase === 'play') {
+              play.push({ card, user });
+            }
+            break;
+          }
+        }
+
+        if (!card) {
+          return;
+        }
+
+        if (phase === 'crib' && crib.length === 4) {
+          phase = 'play';
+        } else if (phase === 'play') {
+          let hasCard = false;
+          for (const h of Object.values(hands)) {
+            if (h && h.length) {
+              hasCard = true;
+            }
+          }
+          if (!hasCard) {
+            phase = 'count';
+            for (const { card, user } of play) {
+              hands[user].push(card);
+            }
+          }
+        }
+
+        for (const [otherConn, otherUser] of connectionMap) {
+          otherConn.write(JSON.stringify({ type: 'hand', user: otherUser, cards: hands[otherUser] || [], room: id }));
+          for (const [otherOtherConn, otherOtherUser] of connectionMap) {
+            if (otherOtherUser !== otherUser) {
+              otherOtherConn.write(JSON.stringify({ type: 'hand', user: otherOtherUser, count: (hands[otherOtherUser] || []).length, room: id }));
+            }
+          }
+          otherConn.write(JSON.stringify({ type: 'deck', room: id, deck: deck.length }));
+          otherConn.write(JSON.stringify({ type: 'play', room: id, cards: play }));
+          otherConn.write(JSON.stringify({ type: 'crib', room: id, count: crib.length, cards: phase === 'count' ? crib : undefined }));
+          otherConn.write(JSON.stringify({ type: 'phase', room: id, phase }));
+        }
       }
     });
 
     conn.write(JSON.stringify({ type: 'join', room: id, clientRoomId }));
     const users = [...new Set(connectionMap.values())];
     for (const [otherConn] of connectionMap) {
-      otherConn.write(JSON.stringify({ type: 'users', users, room: id }));
-      otherConn.write(JSON.stringify({ type: 'deck', room: id, deck: deck.length }));
+      otherConn.write(JSON.stringify({ type: 'users', users, userInfo, room: id }));
     }
+    conn.write(JSON.stringify({ type: 'deck', room: id, deck: deck.length }));
     conn.write(JSON.stringify({ type: 'cut', room: id, card: cut }));
+    conn.write(JSON.stringify({ type: 'play', room: id, cards: play }));
+    conn.write(JSON.stringify({ type: 'crib', room: id, count: crib.length, cards: phase === 'count' ? crib : undefined }));
+    conn.write(JSON.stringify({ type: 'phase', room: id, phase }));
     for (const [, otherUser] of connectionMap) {
       if (otherUser === user) {
         conn.write(JSON.stringify({ type: 'hand', user: otherUser, cards: hands[otherUser] || [], room: id }));

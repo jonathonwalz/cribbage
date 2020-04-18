@@ -22,9 +22,15 @@ function reducer (state, action) {
     case 'chat':
       return { ...state, messages: [...state.messages, action] };
     case 'users':
-      return { ...state, users: action.users };
+      return { ...state, users: action.users, userInfo: action.userInfo };
     case 'cut':
       return { ...state, cut: action.card };
+    case 'phase':
+      return { ...state, phase: action.phase };
+    case 'play':
+      return { ...state, play: action.cards };
+    case 'crib':
+      return { ...state, crib: action.cards || action.count };
     case 'deck':
       return { ...state, deck: action.deck };
     default:
