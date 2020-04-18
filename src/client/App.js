@@ -1,7 +1,7 @@
 import React from 'react';
 
 // Hash router has to be used for Android 4 support
-import { HashRouter as Router, Route } from 'react-router-dom';
+import { HashRouter as Router, Route, Switch, Redirect } from 'react-router-dom';
 
 import { v4 as uuid } from 'uuid';
 import Cookies from 'js-cookie';
@@ -26,11 +26,18 @@ function GameRoom ({ match: { params } }) {
   );
 }
 
+function Home () {
+  return <Redirect to='/r/default' />;
+}
+
 function App () {
   return (
     <Router>
       <SocketProvider>
-        <Route path='/r/:room' component={GameRoom} />
+        <Switch>
+          <Route path='/r/:room' component={GameRoom} />
+          <Route path='/' component={Home} />
+        </Switch>
       </SocketProvider>
     </Router>
   );
