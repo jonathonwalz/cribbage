@@ -1,8 +1,149 @@
+@import-normalize;
+
 html {
   box-sizing: border-box;
 }
 *, *:before, *:after {
   box-sizing: inherit;
+}
+
+html, body {
+  padding: 0;
+  margin: 0;
+}
+
+#root {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: space-between;
+}
+
+.user-info {
+  margin-bottom: 15px;
+  width: 100%;
+  max-width: 400px;
+  align-self: center;
+}
+
+.user-info label {
+  background-color:rgba(0, 0, 0, 0.15);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.15);
+  border-bottom-left-radius: 10px;
+  border-bottom-right-radius: 10px;
+
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  padding-left: 5px;
+}
+
+.user-info label input {
+  flex: 1 1 auto;
+  align-self: stretch;
+  padding: 5px;
+  border: none;
+  margin-left: 5px;
+  border-bottom-right-radius: 10px;
+}
+
+@media (min-width:400px) {
+  .user-info label {
+    border-left: 1px solid rgba(0, 0, 0, 0.15);
+  }
+  .user-info label input {
+    border-right: 1px solid rgba(0, 0, 0, 0.15);
+  }
+}
+
+.game {
+  display: flex;
+  flex-direction: column-reverse;
+  justify-content: space-between;
+}
+
+.game .common {
+  overflow: auto;
+  display: flex;
+  flex-direction: row;
+}
+
+.game .hand.player {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.game .hand.player h2 {
+  margin: 0 0 -1px 0;
+  padding: 3px 6px 0;
+  align-self: center;
+  background-color:rgb(240, 240, 240);
+
+  border: 1px solid rgb(175, 175, 175);
+  border-bottom: rgb(240, 240, 240);;
+  border-top-left-radius: 10px;
+  border-top-right-radius: 10px;
+  z-index: 1;
+
+  order: 0;
+}
+
+.game .hand.player .action {
+  order: 1;
+  align-self: stretch;
+  height: 68px;
+  background-color:rgb(240, 240, 240);
+  border-top: 1px solid rgb(175, 175, 175);
+
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+}
+
+.game .hand.player .action button {
+  background-color:rgb(250, 250, 250);
+  border: 1px solid rgb(175, 175, 175);
+  border-top: none;
+  height: 44px;
+  min-width: 100px;
+  max-width: 300px;
+
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 1.2rem;
+
+  cursor: pointer;
+}
+
+.game .hand.player .action button .card-horizontal {
+  padding: 0;
+  margin: 0;
+  margin-left: .2em;
+  border: none;
+  min-width: 0;
+  min-height: 0;
+  background: none;
+}
+
+.game .hand.player ul {
+  flex: 1 1 auto;
+  align-self: stretch;
+  padding: 6px 6px 0;
+  background-color:rgb(240, 240, 240);
+
+  order: 2;
+}
+
+@media (min-width:768px) {
+  .game .hand.player .action button {
+    height: 56px;
+  }
 }
 
 .cards {
@@ -15,11 +156,6 @@ html {
   display: inline-block;
   margin: 0;
   padding: 0;
-}
-
-button.play {
-  font-size: 2rem;
-  margin-top: 42px;
 }
 
 .cards label {
@@ -46,6 +182,7 @@ button.play {
 
 .card-small {
   font-weight: bold;
+  max-width: 1.2em;
   max-width: calc(1em + 16px + 4px);
   min-width: 44px;
   min-height: 44px;
@@ -94,4 +231,8 @@ button.play {
   width:1px;
   height:1px;
   overflow:hidden;
+}
+
+.debug {
+  display: none;
 }

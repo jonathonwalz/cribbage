@@ -17,7 +17,7 @@ export function Game ({ user }) {
   );
 
   return (
-    <>
+    <div className='game'>
       <section className='hand player'>
         <h2>Hand</h2>
         <Cards
@@ -27,52 +27,58 @@ export function Game ({ user }) {
           selectedCard={selectedCard}
         />
 
-        {!selectedCard ? null : (
-          <button
-            disabled={phase === 'crib' ? hand.length <= 4 : hands.length === 0}
-            className='play'
-            onClick={() => dispatch({ type: 'play', card: selectedCard })}
-          >
-            {phase === 'crib' ? 'Put' : 'Play'} <MiniCard card={selectedCard} horizontal /> {phase === 'crib' ? 'in crib' : ''}
-          </button>
-        )}
+        <div className='action'>
+          {!selectedCard ? null : (
+            <button
+              disabled={phase === 'crib' ? hand.length <= 4 : hands.length === 0}
+              className='play'
+              onClick={() => dispatch({ type: 'play', card: selectedCard })}
+            >
+              {phase === 'crib' ? 'Put' : 'Play'} <MiniCard card={selectedCard} horizontal /> {phase === 'crib' ? 'in crib' : ''}
+            </button>
+          )}
+        </div>
       </section>
 
-      <h2>Cut</h2>
-      {cut ? <Card card={cut} /> : null}
+      <div className='common'>
+        <section className='cut'>
+          <h2>Cut</h2>
+          {cut ? <Card card={cut} /> : null}
+        </section>
 
-      <section className='crib'>
-        <h2>Crib</h2>
-        {Array.isArray(cribMapped) ? <Cards cards={cribMapped} /> : `${cribMapped || 0} cards in crib.`}
-      </section>
+        <section className='crib'>
+          <h2>Crib</h2>
+          {Array.isArray(cribMapped) ? <Cards cards={cribMapped} /> : `${cribMapped || 0} cards in crib.`}
+        </section>
 
-      <section className='play'>
-        <h2>Play</h2>
-        <Cards cards={play} />
-      </section>
+        <section className='play'>
+          <h2>Play</h2>
+          <Cards cards={play} />
+        </section>
 
-      <section className='users'>
-        <h2>Users</h2>
-        <ul>
-          {(users || []).map(otherUser => {
-            const { cards, count } = (hands || {})[otherUser] || {};
-            const { name } = (userInfo || {})[otherUser] || {};
-            const handleClick = () => {
-              dispatch({ type: 'deal', user: otherUser });
-            };
+        <section className='users'>
+          <h2>Users</h2>
+          <ul>
+            {(users || []).map(otherUser => {
+              const { cards, count } = (hands || {})[otherUser] || {};
+              const { name } = (userInfo || {})[otherUser] || {};
+              const handleClick = () => {
+                dispatch({ type: 'deal', user: otherUser });
+              };
 
-            return (
-              <li key={otherUser}>
-                {user === otherUser ? '(You) ' : ''}{name ? `${name} (${otherUser})` : otherUser} ({cards ? cards.length : (count || 0)}) <button onClick={handleClick}>deal</button>
-              </li>
-            );
-          })}
-        </ul>
-      </section>
+              return (
+                <li key={otherUser}>
+                  {user === otherUser ? '(You) ' : ''}{name ? `${name} (${otherUser})` : otherUser} ({cards ? cards.length : (count || 0)}) <button onClick={handleClick}>deal</button>
+                </li>
+              );
+            })}
+          </ul>
 
-      <button onClick={() => dispatch({ type: 'cut' })}>cut</button>
-      <button onClick={() => dispatch({ type: 'shuffle' })}>shuffle</button>
-      <span>{deck} cards remaining</span>
-    </>
+          <button onClick={() => dispatch({ type: 'cut' })}>cut</button>
+          <button onClick={() => dispatch({ type: 'shuffle' })}>shuffle</button>
+          <span>{deck} cards remaining</span>
+        </section>
+      </div>
+    </div>
   );
 }

@@ -34,7 +34,7 @@ export function UserInfo () {
 
   return (
     <section className='user-info'>
-      <h2>Player Information</h2>
+      <h2 className='sr-only'>Player Information</h2>
       <label>
         Your name:{' '}
         <input
