@@ -1,36 +1,97 @@
-.hand {
+html {
+  box-sizing: border-box;
+}
+*, *:before, *:after {
+  box-sizing: inherit;
+}
+
+.cards {
   list-style: none;
   margin: 0;
   padding: 0;
 }
 
-.hand li {
+.cards li {
   display: inline-block;
   margin: 0;
   padding: 0;
 }
 
-.card {
-  margin: 0 12px;
-  width: 200px;
+button.play {
+  font-size: 2rem;
+  margin-top: 42px;
 }
 
-.hand label {
+.cards label {
   cursor: pointer;
 }
 
-.hand label input[type=radio] {
+.cards label input[type=radio] {
   position: absolute;
   opacity: 0;
   width: 0;
   height: 0;
 }
 
-.hand label input[type=radio]:checked + .card {
-  outline: 7px solid #33aa33;
+.cards label input[type=radio]:checked + .card .card-small {
+  outline: none;
+  padding: 4px 7px;
+  border: 2px solid rgb(51, 170, 51);
+  background-color: rgba(51, 170, 51, 0.1);
 }
 
-button.play {
-  font-size: 2rem;
-  margin-top: 42px;
+.card-large {
+  display: none;
+}
+
+.card-small {
+  font-weight: bold;
+  max-width: calc(1em + 16px + 4px);
+  min-width: 44px;
+  min-height: 44px;
+  padding: 5px 8px;
+  margin: 0 2px;
+  border: 1px dotted rgba(0, 0, 0, 0.3);
+  border-radius: 5px;
+  background-color: rgba(0, 0, 0, 0.03);
+}
+
+.card-small.card-horizontal {
+  padding: 1px;
+  margin: 0;
+}
+
+@media (min-width:768px) {
+  .card .card-small {
+    display: none;
+  }
+
+  .card-large {
+    display: block;
+    margin: 0;
+    padding: 7px;
+    max-width: 100px;
+  }
+
+  .cards label input[type=radio]:checked + .card .card-large {
+    padding: 0;
+    border: 7px solid rgb(51, 170, 51);
+    background-color:  rgb(51, 170, 51);
+    border-radius: 12px;
+  }
+}
+
+@media (min-width:1200px) {
+  .card-large {
+    max-width: 200px;
+  }
+}
+
+.sr-only {
+  position:absolute;
+  left:-10000px;
+  top:auto;
+  width:1px;
+  height:1px;
+  overflow:hidden;
 }

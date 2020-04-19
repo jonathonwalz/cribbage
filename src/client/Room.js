@@ -1,12 +1,13 @@
 import React from 'react';
 
 import { SocketContext } from './Socket';
+import { UserInfo } from './UserInfo';
 
 const initialState = { joined: false, messages: [], people: {}, dispatch: () => {} };
 function reducer (state, action) {
   switch (action.type) {
     case 'join':
-      return { ...state, joined: true, dispatch: action.dispatch };
+      return { ...state, joined: true, dispatch: action.dispatch, user: action.user };
     case 'left':
       return { ...state, joined: false, dispatch: () => {} };
     case 'hand':
@@ -58,6 +59,7 @@ export function Room ({ room, user, children }) {
         if (message.clientRoomId === clientRoomId && message.room && message.type === 'join') {
           roomId = message.room;
           dispatch({
+            ...message,
             type: 'join',
             dispatch: message => sendMessage({
               ...message,
@@ -80,5 +82,16 @@ export function Room ({ room, user, children }) {
     [connected, room, sendMessage, subscribe, unsubscribe, user]
   );
 
-  return <RoomContext.Provider value={state} children={children} />;
+  return (
+    <RoomContext.Provider value={state} children={children}>
+      <UserInfo />
+      {children}
+      <section className='debug'>
+        <h2>Debug</h2>
+        <pre>
+          {JSON.stringify(state, null, 2)}
+        </pre>
+      </section>
+    </RoomContext.Provider>
+  );
 }

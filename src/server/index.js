@@ -175,7 +175,7 @@ const createRoom = (id = uuid()) => {
       }
     });
 
-    conn.write(JSON.stringify({ type: 'join', room: id, clientRoomId }));
+    conn.write(JSON.stringify({ type: 'join', room: id, clientRoomId, user }));
     const users = [...new Set(connectionMap.values())];
     for (const [otherConn] of connectionMap) {
       otherConn.write(JSON.stringify({ type: 'users', users, userInfo, room: id }));
