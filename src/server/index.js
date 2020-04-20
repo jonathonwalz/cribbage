@@ -133,7 +133,7 @@ const createRoom = (id = uuid()) => {
             if (phase === 'crib') {
               crib.push({ card, user });
             } else if (phase === 'play') {
-              play.push({ card, user });
+              play.unshift({ card, user });
             }
             break;
           }
@@ -155,7 +155,7 @@ const createRoom = (id = uuid()) => {
           if (!hasCard) {
             phase = 'count';
             for (const { card, user } of play) {
-              hands[user].push(card);
+              hands[user].unshift(card);
             }
           }
         }

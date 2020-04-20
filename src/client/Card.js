@@ -25,7 +25,26 @@ const cardMappingData = {
 };
 
 const textStyle = { textAnchor: 'middle', fontSize: 15.42 };
-export function MiniCard ({ card: { value, suit }, horizontal }) {
+export function MiniCard ({ card, horizontal, back }) {
+  if (back) {
+    return (
+      <svg
+        viewBox='0 0 169.075 244.64'
+        xmlns='http://www.w3.org/2000/svg'
+        className={horizontal ? 'card-back card-small' : 'card-back card-small card-horizontal'}
+        role='img'
+        aria-label='Playing card back'
+      >
+        <use xlinkHref={`${svgCards}#alternate-back`} />
+      </svg>
+    );
+  }
+
+  if (!card) {
+    return null;
+  }
+
+  const { value, suit } = card;
   const cardValueConfig = cardMappingData[value] || { key: value, short: value, long: value };
 
   if (horizontal) {
@@ -57,7 +76,28 @@ export function MiniCard ({ card: { value, suit }, horizontal }) {
   );
 }
 
-export function Card ({ card }) {
+export function Card ({ card, back }) {
+  if (back) {
+    return (
+      <span className='card'>
+        <MiniCard back />
+        <svg
+          viewBox='0 0 169.075 244.64'
+          xmlns='http://www.w3.org/2000/svg'
+          className='card-back card-large'
+          role='img'
+          aria-label='Playing card back'
+        >
+          <use xlinkHref={`${svgCards}#alternate-back`} />
+        </svg>
+      </span>
+    );
+  }
+
+  if (!card) {
+    return null;
+  }
+
   const { suit, value } = card;
   const cardValueConfig = cardMappingData[value] || { key: value, short: value, long: value };
   const key = `${suit}_${cardValueConfig.key || value}`;

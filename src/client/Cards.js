@@ -40,27 +40,35 @@ function RadioCard ({ card, onChange, selectedCardValue }) {
   );
 }
 
-export function Cards ({ cards, className, name, onChange, selectedCard }) {
+export function Cards ({ cards, count, className, name, onChange, selectedCard }) {
   const selectedCardValue = selectedCard ? `${selectedCard.value}-${selectedCard.suit}` : undefined;
+
+  const renderedCards = [];
+  for (let i = 0; i < Math.max(count || 0, (cards || []).length); i++) {
+    if (i < (cards || []).length) {
+      const cardOrCardUserPair = cards[i];
+      const card = cardOrCardUserPair.card || cardOrCardUserPair;
+
+      renderedCards.push(
+        <li key={`${card.value}-${card.suit}`}>
+          {!onChange ? <Card card={card} /> : (
+            <RadioCard
+              name={name}
+              card={card}
+              onChange={onChange}
+              selectedCardValue={selectedCardValue}
+            />
+          )}
+        </li>
+      );
+    } else {
+      renderedCards.push(<li key={i}><Card back /></li>);
+    }
+  }
 
   return (
     <ul className={['cards', className].filter(i => i).join(' ')}>
-      {(cards || []).map(cardOrCardUserPair => {
-        const card = cardOrCardUserPair.card || cardOrCardUserPair;
-
-        return (
-          <li key={`${card.value}-${card.suit}`}>
-            {!onChange ? <Card card={card} /> : (
-              <RadioCard
-                name={name}
-                card={card}
-                onChange={onChange}
-                selectedCardValue={selectedCardValue}
-              />
-            )}
-          </li>
-        );
-      })}
+      {renderedCards}
     </ul>
   );
 }
