@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { Card } from './Card';
+import { MiniCard, Card } from './Card';
 
 export function useRadioCards (cards) {
   const [selectedCardState, setSelectedCard] = React.useState();
@@ -35,15 +35,17 @@ function RadioCard ({ card, onChange, selectedCardValue }) {
   return (
     <label>
       <input type='radio' name='card' value={radioValue} onChange={onChange} checked={selectedCardValue === radioValue} />
+      <MiniCard card={card} />
       <Card card={card} />
     </label>
   );
 }
 
-export function Cards ({ cards, count, className, name, onChange, selectedCard }) {
+export function Cards ({ cards, count, mini, className, name, onChange, selectedCard }) {
   const selectedCardValue = selectedCard ? `${selectedCard.value}-${selectedCard.suit}` : undefined;
 
   const renderedCards = [];
+  const RenderCard = mini ? MiniCard : Card;
   for (let i = 0; i < Math.max(count || 0, (cards || []).length); i++) {
     if (i < (cards || []).length) {
       const cardOrCardUserPair = cards[i];
@@ -51,7 +53,7 @@ export function Cards ({ cards, count, className, name, onChange, selectedCard }
 
       renderedCards.push(
         <li key={`${card.value}-${card.suit}`}>
-          {!onChange ? <Card card={card} /> : (
+          {!onChange ? <RenderCard card={card} /> : (
             <RadioCard
               name={name}
               card={card}
@@ -62,7 +64,7 @@ export function Cards ({ cards, count, className, name, onChange, selectedCard }
         </li>
       );
     } else {
-      renderedCards.push(<li key={i}><Card back /></li>);
+      renderedCards.push(<li key={i}><RenderCard back /></li>);
     }
   }
 

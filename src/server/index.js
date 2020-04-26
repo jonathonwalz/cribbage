@@ -3,6 +3,7 @@ const path = require('path');
 const staticServer = require('node-static');
 const sockjs = require('sockjs');
 const { v4: uuid } = require('uuid');
+const dogNames = require('dog-names');
 const shuffle = require('knuth-shuffle-seeded');
 
 const fileServer = new staticServer.Server(path.join(__dirname, '../../build'));
@@ -40,9 +41,74 @@ const createRoom = (id = uuid()) => {
     hands = {};
     play = [];
     cut = null;
-    phase = 'crib';
+    phase = 'shuffle';
+
+    sendState();
+
+    const users = [...new Set(connectionMap.values())];
+    const toDeal = [];
+    for (let i = 0; i < 5; i++) {
+      toDeal.push([...users]);
+    }
+
+    function deal () {
+      const round = toDeal.pop();
+
+      function dealCards () {
+        const user = round.pop();
+
+        if (user) {
+          const card = deck.pop();
+          hands[user] = (hands[user] || []);
+          hands[user].push(card);
+
+          sendState();
+          setTimeout(dealCards, 750);
+        } else {
+          setTimeout(deal, 750);
+        }
+      }
+
+      if (round) {
+        dealCards();
+      } else {
+        phase = 'crib';
+        sendState();
+      }
+    }
+
+    deal();
   }
   shuffleDeck();
+
+  function sendState () {
+    const users = [...new Set(connectionMap.values())];
+
+    const baseState = {
+      hands: {},
+      users: users,
+      userInfo,
+      cut,
+      phase,
+      play,
+      crib: phase === 'count' ? crib : crib.count,
+      deck: deck.length
+    };
+
+    for (const [conn, user] of connectionMap) {
+      const state = { ...baseState, hands: {} };
+
+      for (const [otherUser, hand] of Object.entries(hands)) {
+        if (otherUser === user || phase === 'count') {
+          state.hands[otherUser] = { cards: hand || [], count: (hand || []).length };
+        } else {
+          state.hands[otherUser] = { count: (hand || []).length };
+        }
+      }
+
+      conn.write(JSON.stringify({ type: 'state', room: id, state }));
+    }
+  }
 
   const connect = (conn, joinMessage) => {
     const clientRoomId = joinMessage.clientRoomId;
@@ -50,10 +116,7 @@ const createRoom = (id = uuid()) => {
 
     const leaveRoom = () => {
       connectionMap.delete(conn);
-      const users = [...new Set(connectionMap.values())];
-      for (const [otherConn] of connectionMap) {
-        otherConn.write(JSON.stringify({ type: 'users', users, userInfo, room: id }));
-      }
+      sendState();
       if (!connectionMap.size) {
         roomTimeout = setTimeout(() => {
           rooms.delete(id);
@@ -73,52 +136,20 @@ const createRoom = (id = uuid()) => {
         message = JSON.parse(message);
       } catch {}
 
-      if (message.room !== id) {
+      if (message.room !== id || phase === 'shuffle') {
         return;
       }
 
       if (message.type === 'leave') {
         leaveRoom();
-      } else if (message.type === 'chat') {
-        const data = JSON.stringify({ type: 'chat', text: message.text, from: user, room: id });
-        for (const [otherConn] of connectionMap) {
-          otherConn.write(data);
-        }
       } else if (message.type === 'userInfo') {
         userInfo[user] = message.info;
-        for (const [otherConn] of connectionMap) {
-          otherConn.write(JSON.stringify({ type: 'users', users, userInfo, room: id }));
-        }
+        sendState();
       } else if (message.type === 'shuffle') {
         shuffleDeck();
-        for (const [otherConn] of connectionMap) {
-          otherConn.write(JSON.stringify({ type: 'shuffle', room: id }));
-          otherConn.write(JSON.stringify({ type: 'deck', room: id, deck: deck.length }));
-          otherConn.write(JSON.stringify({ type: 'cut', room: id, card: cut }));
-
-          otherConn.write(JSON.stringify({ type: 'play', room: id, cards: play }));
-          otherConn.write(JSON.stringify({ type: 'crib', room: id, count: crib.length, cards: phase === 'count' ? crib : undefined }));
-          otherConn.write(JSON.stringify({ type: 'phase', room: id, phase }));
-        }
       } else if (message.type === 'cut') {
         cut = deck.pop();
-        for (const [otherConn] of connectionMap) {
-          otherConn.write(JSON.stringify({ type: 'cut', room: id, card: cut }));
-          otherConn.write(JSON.stringify({ type: 'deck', room: id, deck: deck.length }));
-        }
-      } else if (message.type === 'deal') {
-        const card = deck.pop();
-        hands[message.user] = (hands[message.user] || []);
-        hands[message.user].push(card);
-
-        for (const [otherConn, otherUser] of connectionMap) {
-          if (otherUser === message.user) {
-            otherConn.write(JSON.stringify({ type: 'hand', user: message.user, cards: hands[message.user] || [], room: id }));
-          } else {
-            otherConn.write(JSON.stringify({ type: 'hand', user: message.user, count: (hands[message.user] || []).length, room: id }));
-          }
-          otherConn.write(JSON.stringify({ type: 'deck', room: id, deck: deck.length }));
-        }
+        sendState();
       } else if (message.type === 'play') {
         if (phase === 'crib' && crib.some(c => c.user === user)) {
           return;
@@ -160,38 +191,29 @@ const createRoom = (id = uuid()) => {
           }
         }
 
-        for (const [otherConn, otherUser] of connectionMap) {
-          otherConn.write(JSON.stringify({ type: 'hand', user: otherUser, cards: hands[otherUser] || [], room: id }));
-          for (const [otherOtherConn, otherOtherUser] of connectionMap) {
-            if (otherOtherUser !== otherUser) {
-              otherOtherConn.write(JSON.stringify({ type: 'hand', user: otherUser, count: (hands[otherUser] || []).length, room: id }));
-            }
-          }
-          otherConn.write(JSON.stringify({ type: 'deck', room: id, deck: deck.length }));
-          otherConn.write(JSON.stringify({ type: 'play', room: id, cards: play }));
-          otherConn.write(JSON.stringify({ type: 'crib', room: id, count: crib.length, cards: phase === 'count' ? crib : undefined }));
-          otherConn.write(JSON.stringify({ type: 'phase', room: id, phase }));
-        }
+        sendState();
       }
     });
 
-    conn.write(JSON.stringify({ type: 'join', room: id, clientRoomId, user }));
-    const users = [...new Set(connectionMap.values())];
-    for (const [otherConn] of connectionMap) {
-      otherConn.write(JSON.stringify({ type: 'users', users, userInfo, room: id }));
-    }
-    conn.write(JSON.stringify({ type: 'deck', room: id, deck: deck.length }));
-    conn.write(JSON.stringify({ type: 'cut', room: id, card: cut }));
-    conn.write(JSON.stringify({ type: 'play', room: id, cards: play }));
-    conn.write(JSON.stringify({ type: 'crib', room: id, count: crib.length, cards: phase === 'count' ? crib : undefined }));
-    conn.write(JSON.stringify({ type: 'phase', room: id, phase }));
-    for (const [, otherUser] of connectionMap) {
-      if (otherUser === user) {
-        conn.write(JSON.stringify({ type: 'hand', user: otherUser, cards: hands[otherUser] || [], room: id }));
-      } else {
-        conn.write(JSON.stringify({ type: 'hand', user: otherUser, count: (hands[otherUser] || []).length, room: id }));
+    if (!userInfo[user]) {
+      // This is ... not ideal
+      let name = dogNames.allRandom();
+      while (Object.keys(userInfo).length <= dogNames.length) {
+        if (Object.values(userInfo).some(info => name === info)) {
+          name = dogNames.allRandom();
+        } else {
+          break;
+        }
       }
+      if (Object.keys(userInfo).length > dogNames.length) {
+        name = user;
+      }
+      userInfo[user] = { name };
     }
+
+    conn.write(JSON.stringify({ type: 'join', room: id, clientRoomId, user }));
+
+    sendState();
   };
 
   rooms.set(id, connect);

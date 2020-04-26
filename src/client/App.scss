@@ -1,0 +1,516 @@
+@import-normalize;
+
+$card-aspect-ratio: 169.075 / 244.64;
+
+html {
+  box-sizing: border-box;
+  // background-image: url(./felt.jpg);
+  background-repeat: repeat;
+}
+*, *:before, *:after {
+  box-sizing: inherit;
+  font-family: roboto;
+}
+
+html, body {
+  padding: 0;
+  margin: 0;
+}
+
+#root {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: space-between;
+}
+
+.game {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column-reverse;
+  justify-content: space-between;
+}
+
+.game .hand.player {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.game .hand.player h2 {
+  margin: 0 0 -1px 0;
+  padding: 3px 6px 0;
+  align-self: center;
+  background-color:rgb(240, 240, 240);
+
+  border: 1px solid rgb(175, 175, 175);
+  border-bottom: none;
+  border-top-left-radius: 10px;
+  border-top-right-radius: 10px;
+  z-index: 1;
+
+  order: 0;
+}
+
+.game .hand.player h2 .user-name {
+  position: relative;
+}
+
+.game .hand.player h2 .user-name span,
+.game .hand.player h2 .user-name input {
+  font-size: 1em;
+  font-weight: bold;
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: none;
+}
+.game .hand.player h2 .user-name span {
+  color: transparent;
+  background-color: transparent;
+  visibility: hidden;
+}
+.game .hand.player h2 .user-name input {
+  position: absolute;
+  left: 0;
+  right: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.game .hand.player .action {
+  order: 1;
+  align-self: stretch;
+  height: 68px;
+  background-color:rgb(240, 240, 240);
+  border-top: 1px solid rgb(175, 175, 175);
+
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+}
+
+.game .hand.player .action button {
+  background-color:rgb(250, 250, 250);
+  border: 1px solid rgb(175, 175, 175);
+  border-top: none;
+  height: 44px;
+  min-width: 100px;
+  max-width: 300px;
+
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 1.2rem;
+
+  cursor: pointer;
+}
+
+.game .hand.player .action button .card-horizontal {
+  padding: 0;
+  margin: 0;
+  margin-left: .2em;
+  border: none;
+  min-width: 0;
+  min-height: 0;
+  background: none;
+}
+
+.game .hand.player .cards {
+  flex: 1 1 auto;
+  align-self: stretch;
+  margin: 0;
+  padding: 6px 6px 0;
+  background-color:rgb(240, 240, 240);
+
+  li {
+    display: inline-block;
+    margin: 0;
+    padding: 0;
+
+    max-width: 100px;
+  }
+
+  label {
+    cursor: pointer;
+  }
+
+  label, .card {
+    display: inline-block;
+    width: 100%;
+  }
+
+  label input[type=radio] {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+  }
+
+  label input[type=radio]:checked + .card-small {
+    outline: none;
+    padding: 4px 7px;
+    border: 2px solid rgb(51, 170, 51);
+    background-color: rgba(51, 170, 51, 0.1);
+  }
+
+  .card-large {
+    padding: 7px;
+    display: none;
+  }
+  @media (min-width:768px) {
+    .card-small {
+      display: none;
+    }
+    .card-large {
+      display: inline-block;
+    }
+  }
+
+  label input[type=radio]:checked + .card-large {
+    padding: 0;
+    border: 7px solid rgb(51, 170, 51);
+    background-color:  rgb(51, 170, 51);
+    border-radius: 12px;
+  }
+
+  order: 2;
+}
+
+$hand-width: 4rem;
+$card-width: 50px;
+$large-card-width: 100px;
+$hand-background: rgba(255, 255, 255, .2);
+
+@media (min-width:768px) {
+  .game .hand.player .action button {
+    height: 56px;
+  }
+}
+
+.game .common {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  justify-content: space-around;
+
+  position: relative;
+  padding: ($hand-width + 1rem) ($hand-width + 1rem) 0;
+  min-height: 300px;
+}
+
+.pre-play, .play {
+  background-color: rgba(255, 255, 255, .1);
+  box-shadow: 0px 0px 5px 1px rgba(255,255,255,0.1);
+  border-radius: 20px;
+  padding: 5px;
+
+  display: flex;
+  flex-direction: row;
+  justify-content: space-evenly;
+  align-items: flex-start;
+
+  h2 {
+    color: #fff;
+  }
+}
+
+.deck {
+  display: flex;
+  flex-direction: column;
+
+  .card-small {
+    display: inline-block;
+    width: 44px;
+  }
+
+  .card-large {
+    display: none;
+  }
+  @media (min-width:768px) {
+    .card-small {
+      display: none;
+    }
+    .card-large {
+      display: block;
+      width: 75px;
+    }
+  }
+}
+
+.users {
+  flex-direction: column;
+  z-index: -1;
+}
+
+.pre-play h2,
+.pre-play h3,
+.pre-play ul,
+.pre-play ol,
+.users h2,
+.users h3,
+.users ul,
+.users ol,
+.play h2,
+.play h3,
+.play ul,
+.play ol {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pre-play > section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  text-align: center;
+}
+
+.crib {
+  li {
+    display: inline-block;
+    width: 40px;
+  }
+
+  .full {
+    display: none;
+  }
+  @media (min-width:768px) {
+    .mini {
+      display: none;
+    }
+    .full {
+      display: block;
+      li {
+        width: 75px
+      }
+    }
+  }
+}
+
+.users ol {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.users ol > li {
+  display: block;
+  position: absolute;
+  border-radius: 25px;
+
+  .cards-wrapper {
+    position: absolute;
+    padding: 0.5rem;
+  }
+  .cards {
+    position: relative;
+    width: 100%;
+    height: 100%;
+
+    > li, svg {
+      position: absolute;
+      display: block;
+      position: absolute;
+    }
+  }
+
+  &:nth-child(1),
+  &:nth-child(3) {
+    box-shadow: 0px 0px 10px 2px rgba(255,255,255,0.5);
+    background-color: rgba(255, 255, 255, .6);
+    width: $hand-width;
+    top: 70%;
+    transform: translateY(-70%);
+    min-height: 150px;
+    height: 50%;
+    max-height: 75%;
+
+    right: 0;
+    left: auto;
+
+    .name-wrapper {
+      position: relative;
+      top: 50%;
+      width: 8rem;
+      transform: translateY(-50%);
+    }
+
+    .cards-wrapper {
+      top: 0;
+      width: 200%;
+      height: 100%;
+    }
+    .cards > li {
+      height: $card-width;
+      @media (min-width:768px) and (min-height: 800px) {
+        height: $large-card-width;
+      }
+      width: 100%;
+
+      svg {
+        height: 100%;
+      }
+    }
+  }
+  &:nth-child(1) {
+    left: 0;
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+    h3 {
+      transform: rotate(90deg) translateY(0.5rem);
+    }
+    .cards-wrapper {
+      right: 1rem;
+    }
+    .cards > li, svg {
+      right: 0;
+    }
+  }
+  &:nth-child(3) {
+    right: 0;
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+    h3 {
+      transform: rotate(270deg) translateY(-$hand-width + 0.5rem);
+    }
+    .cards-wrapper {
+      left: 1rem;
+    }
+    .cards > li, svg {
+      left: 0;
+    }
+  }
+
+  &:nth-child(2) {
+    background: none;
+    border-radius: 0;
+    width: 100%;
+    left: 0;
+    top: 0;
+    height: $hand-width;
+
+    .hand-wrapper {
+      border-radius: 25px;
+      border-top-right-radius: 0;
+      border-top-left-radius: 0;
+      box-shadow: 0px 0px 10px 2px rgba(255,255,255,0.5);
+      background-color: rgba(255, 255, 255, .6);
+      width: 75%;
+      max-width: 400px;
+      margin: 0 auto;
+
+      display: flex;
+      flex-direction: column-reverse;
+    }
+
+    .cards-wrapper {
+      left: 0;
+      width: 100%;
+      height: 200%;
+      bottom: 1rem;
+    }
+
+    .cards > li {
+      width: $card-width;
+      @media (min-width:350px) {
+        width: $large-card-width;
+      }
+      height: 100%;
+      bottom: 0;
+
+      svg {
+        width: 100%;
+        bottom: 0;
+        position: absolute;
+      }
+    }
+  }
+
+  .hand-wrapper {
+    overflow: hidden;
+    position: relative;
+    width: 100%;
+    height: 100%;
+  }
+
+  h3 {
+    text-align: center;
+  }
+
+  .deal {
+    position: absolute;
+    top: 100%;
+  }
+}
+
+.card-small {
+  font-weight: bold;
+  width: 1.2em;
+  width: calc(1em + 16px + 4px);
+  padding: 5px 8px;
+  margin: 0 2px;
+  border: 1px dotted rgba(0, 0, 0, 0.3);
+  border-radius: 5px;
+  background-color: rgb(240, 240, 240);
+}
+
+.card-small.card-horizontal {
+  padding: 1px;
+  margin: 0;
+}
+
+.card-back {
+  fill: #cc3333;
+  border: none;
+}
+
+.play {
+  flex-direction: column;
+  text-align: center;
+  align-items: center;
+
+  .cards {
+    display: flex;
+    flex-direction: row;
+    overflow-x: auto;
+    width: 100%;
+  }
+  li {
+    flex: 0 0 auto;
+  }
+  .full {
+    display: none;
+  }
+  @media (min-width:768px) {
+    .mini {
+      display: none;
+    }
+    .full {
+      display: flex;
+      li {
+        width: 75px
+      }
+    }
+  }
+}
+
+.sr-only {
+  position:absolute;
+  left:-10000px;
+  top:auto;
+  width:1px;
+  height:1px;
+  overflow:hidden;
+}
+
+.debug {
+  display: none;
+}

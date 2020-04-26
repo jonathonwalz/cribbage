@@ -25,21 +25,7 @@ const cardMappingData = {
 };
 
 const textStyle = { textAnchor: 'middle', fontSize: 15.42 };
-export function MiniCard ({ card, horizontal, back }) {
-  if (back) {
-    return (
-      <svg
-        viewBox='0 0 169.075 244.64'
-        xmlns='http://www.w3.org/2000/svg'
-        className={horizontal ? 'card-back card-small' : 'card-back card-small card-horizontal'}
-        role='img'
-        aria-label='Playing card back'
-      >
-        <use xlinkHref={`${svgCards}#alternate-back`} />
-      </svg>
-    );
-  }
-
+export function MiniCard ({ card, horizontal }) {
   if (!card) {
     return null;
   }
@@ -76,21 +62,41 @@ export function MiniCard ({ card, horizontal, back }) {
   );
 }
 
-export function Card ({ card, back }) {
+function CardSVG ({ className, rotate, label, link }) {
+  let viewBox = '0 0 169.075 244.64';
+  const transform = {};
+  if (rotate === 90) {
+    viewBox = '0 0 244.64 169.075';
+    transform.transform = 'rotate(90) translate(0,-244.64)';
+  } else if (rotate === 180) {
+    transform.transform = 'rotate(180) translate(-169.075,-244.64)';
+  } else if (rotate === 270 || rotate === -90) {
+    viewBox = '0 0 244.64 169.075';
+    transform.transform = 'rotate(-90) translate(-169.075)';
+  }
+
+  return (
+    <svg
+      viewBox={viewBox}
+      xmlns='http://www.w3.org/2000/svg'
+      className={className}
+      role='img'
+      aria-label={label}
+    >
+      <use xlinkHref={link} {...transform} />
+    </svg>
+  )
+}
+
+export function Card ({ card, back, rotate }) {
   if (back) {
     return (
-      <span className='card'>
-        <MiniCard back />
-        <svg
-          viewBox='0 0 169.075 244.64'
-          xmlns='http://www.w3.org/2000/svg'
-          className='card-back card-large'
-          role='img'
-          aria-label='Playing card back'
-        >
-          <use xlinkHref={`${svgCards}#alternate-back`} />
-        </svg>
-      </span>
+      <CardSVG
+        className='card card-back card-large'
+        rotate={rotate}
+        label='Playing card back'
+        link={`${svgCards}#alternate-back`}
+      />
     );
   }
 
@@ -103,17 +109,11 @@ export function Card ({ card, back }) {
   const key = `${suit}_${cardValueConfig.key || value}`;
 
   return (
-    <span className='card'>
-      <MiniCard card={card} />
-      <svg
-        viewBox='0 0 169.075 244.64'
-        xmlns='http://www.w3.org/2000/svg'
-        className='card-large'
-        role='img'
-        aria-label={`${cardValueConfig.long} of ${suit}s`}
-      >
-        <use xlinkHref={`${svgCards}#${key}`} />
-      </svg>
-    </span>
+    <CardSVG
+      className='card card-large'
+      rotate={rotate}
+      label={`${cardValueConfig.long} of ${suit}s`}
+      link={`${svgCards}#${key}`}
+    />
   );
 }

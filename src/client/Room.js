@@ -1,7 +1,6 @@
 import React from 'react';
 
 import { SocketContext } from './Socket';
-import { UserInfo } from './UserInfo';
 
 const initialState = { joined: false, messages: [], people: {}, dispatch: () => {} };
 function reducer (state, action) {
@@ -10,30 +9,11 @@ function reducer (state, action) {
       return { ...state, joined: true, dispatch: action.dispatch, user: action.user };
     case 'left':
       return { ...state, joined: false, dispatch: () => {} };
-    case 'hand':
+    case 'state':
       return {
         ...state,
-        hands: {
-          ...state.hands,
-          [action.user]: action
-        }
+        ...action.state
       };
-    case 'shuffle':
-      return { ...state, hands: {} };
-    case 'chat':
-      return { ...state, messages: [...state.messages, action] };
-    case 'users':
-      return { ...state, users: action.users, userInfo: action.userInfo };
-    case 'cut':
-      return { ...state, cut: action.card };
-    case 'phase':
-      return { ...state, phase: action.phase };
-    case 'play':
-      return { ...state, play: action.cards };
-    case 'crib':
-      return { ...state, crib: action.cards || action.count };
-    case 'deck':
-      return { ...state, deck: action.deck };
     default:
       throw new Error('Missing action ' + action.type);
   }
@@ -84,7 +64,6 @@ export function Room ({ room, user, children }) {
 
   return (
     <RoomContext.Provider value={state} children={children}>
-      <UserInfo />
       {children}
       <section className='debug'>
         <h2>Debug</h2>

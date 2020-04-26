@@ -32,18 +32,18 @@ export function UserInfo () {
     [dispatch, lastJoined, joined, nameState]
   );
 
+  const nameValue = (nameState === undefined ? name : nameState) || '';
+
   return (
-    <section className='user-info'>
-      <h2 className='sr-only'>Player Information</h2>
-      <label>
-        Your name:{' '}
-        <input
-          type='text'
-          placeholder={user}
-          value={(nameState === undefined ? name : nameState) || ''}
-          onChange={handleChange}
-        />
-      </label>
-    </section>
+    <span className='user-name'>
+      <span aria-hidden>{nameValue}</span>
+      <input
+        type='text'
+        placeholder={user}
+        value={nameValue}
+        onChange={handleChange}
+        aria-label='Your name'
+      />
+    </span>
   );
 }

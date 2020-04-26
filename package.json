@@ -4,6 +4,7 @@
   "private": true,
   "license": "MIT",
   "dependencies": {
+    "dog-names": "^2.0.0",
     "knuth-shuffle-seeded": "^1.0.6",
     "node-static": "^0.7.11",
     "sockjs": "^0.3.20",
@@ -14,13 +15,15 @@
     "@testing-library/react": "^9.5.0",
     "@testing-library/user-event": "^7.2.1",
     "js-cookie": "^2.2.1",
+    "node-sass": "^4.14.0",
     "react": "^16.13.1",
     "react-app-polyfill": "^1.0.6",
     "react-dom": "^16.13.1",
     "react-router-dom": "^5.1.2",
     "react-scripts": "3.4.1",
     "semistandard": "^14.2.0",
-    "svg-cards": "^4.0.0"
+    "svg-cards": "^4.0.0",
+    "typeface-roboto": "0.0.75"
   },
   "scripts": {
     "start": "react-scripts start",
