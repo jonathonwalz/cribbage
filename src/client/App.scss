@@ -69,7 +69,7 @@ $current-turn-color: rgb(221, 130, 44);
     transform: rotate(45deg);
   }
 
-  &.has-action .action {
+  &.has-action .cards {
     box-shadow: 0px -20px 40px 20px $current-turn-color;
   }
 
@@ -85,8 +85,6 @@ $current-turn-color: rgb(221, 130, 44);
     border-top-left-radius: 10px;
     border-top-right-radius: 10px;
     z-index: 1;
-
-    order: 0;
 
     .user-name {
       position: relative;
@@ -116,22 +114,23 @@ $current-turn-color: rgb(221, 130, 44);
   }
 
   .action {
-    order: 1;
     align-self: stretch;
     height: 68px;
+    height: calc(68px + env(safe-area-inset-bottom, 0));
     background-color:rgb(240, 240, 240);
-    border-top: 1px solid rgb(175, 175, 175);
 
     display: flex;
     flex-direction: column;
     justify-content: flex-start;
     align-items: center;
+
+    padding: 10px 0;
+    padding-bottom: calc(10px + env(safe-area-inset-bottom, 0));
   }
 
   .action button {
     background-color:rgb(250, 250, 250);
     border: 1px solid rgb(175, 175, 175);
-    border-top: none;
     height: 44px;
     min-width: 100px;
     max-width: 300px;
@@ -141,28 +140,38 @@ $current-turn-color: rgb(221, 130, 44);
     justify-content: space-between;
     align-items: center;
     font-size: 1.2rem;
+    color: #000;
 
     cursor: pointer;
+
+    &:focus, &:hover {
+      background-color: rgb(51, 170, 51);
+      color: #fff;
+    }
+    &:active {
+      transform: scale(0.9);
+    }
   }
 
   .action button .card-horizontal {
-    padding: 0;
-    margin: 0;
+    padding: 10px 0;
+    margin: 0 .2em;
     margin-left: .2em;
     border: none;
     min-width: 0;
     min-height: 0;
-    background: none;
+    background-color: rgba(255, 255, 255, 0.6);
   }
 
   .cards {
     flex: 1 1 auto;
     align-self: stretch;
     margin: 0;
+    border-top: 1px solid rgb(175, 175, 175);
     padding: 6px 6px 0;
     padding: 6px
       calc(6px + env(safe-area-inset-right, 0))
-      env(safe-area-inset-bottom, 0)
+      0
       calc(6px + env(safe-area-inset-left, 0));
     background-color:rgb(240, 240, 240);
 
@@ -221,8 +230,6 @@ $current-turn-color: rgb(221, 130, 44);
         display: inline-block;
       }
     }
-
-    order: 2;
   }
 
   &.disabled .cards {
@@ -540,6 +547,7 @@ $hand-background: rgba(255, 255, 255, .2);
 
   &:nth-child(2) {
     top: 0;
+    height: calc(#{$hand-width} + env(safe-area-inset-top, 0));
     .hand-wrapper {
       border-top-right-radius: 0;
       border-top-left-radius: 0;
@@ -559,6 +567,7 @@ $hand-background: rgba(255, 255, 255, .2);
   }
   &:nth-child(4) {
     bottom: 0;
+    height: calc(#{$hand-width} + env(safe-area-inset-bottom, 0));
     .hand-wrapper {
       border-bottom-right-radius: 0;
       border-bottom-left-radius: 0;

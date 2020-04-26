@@ -75,7 +75,7 @@ export function PlayerHand ({ userInfo, index, playerNumber, hand, cribOwner, tu
   }
 
   return (
-    <li className={turn || count === 5 ? 'hand has-action' : 'hand'}>
+    <li className={turn ? 'hand has-action' : 'hand'}>
       <div className='hand-wrapper'>
         <div className='name-wrapper'>
           <header>
@@ -140,14 +140,15 @@ export function Game ({ user }) {
     }
 
     const user = order[index];
+    const usersHand = (hands || {})[user];
     handsToRender.push(
       <PlayerHand
         key={i}
         index={i}
         userInfo={userInfo[user]}
-        hand={(hands || {})[user]}
+        hand={usersHand}
         cribOwner={user === cribOwner}
-        turn={user === turn && phase === 'play'}
+        turn={phase === 'play' ? user === turn : (phase === 'crib' && (usersHand || {}).count === 5)}
       />
     );
   }
