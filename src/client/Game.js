@@ -1,11 +1,15 @@
 import React from 'react';
-import { RoomContext } from './Room';
+import Modal from 'react-modal';
 
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faCrown, faCog, faArrowCircleUp, faArrowCircleDown } from '@fortawesome/free-solid-svg-icons';
+
+import { RoomContext } from './Room';
 import { Cards, useRadioCards } from './Cards';
 import { Card, MiniCard } from './Card';
 import { UserInfo } from './UserInfo';
 
-export function PlayerHand ({ userInfo, index, playerNumber, hand }) {
+export function PlayerHand ({ userInfo, index, playerNumber, hand, cribOwner }) {
   const { cards, count } = hand || {};
   const { name } = userInfo || {};
 
@@ -14,7 +18,7 @@ export function PlayerHand ({ userInfo, index, playerNumber, hand }) {
   const cardsCallback = React.useCallback(card => {
     cardsRef.current = card;
     if (cardsRef.current) {
-      setSize(index === 1 ? cardsRef.current.clientWidth : cardsRef.current.clientHeight);
+      setSize(index === 1 || index === 3 ? cardsRef.current.clientWidth : cardsRef.current.clientHeight);
     }
   }, [index]);
 
@@ -23,7 +27,7 @@ export function PlayerHand ({ userInfo, index, playerNumber, hand }) {
   const firstCardCallback = React.useCallback(card => {
     firstCardRef.current = card;
     if (firstCardRef.current) {
-      setCardSize(index === 1 ? firstCardRef.current.clientWidth : firstCardRef.current.clientHeight);
+      setCardSize(index === 1 || index === 3 ? firstCardRef.current.clientWidth : firstCardRef.current.clientHeight);
     }
   }, [index]);
 
@@ -31,10 +35,10 @@ export function PlayerHand ({ userInfo, index, playerNumber, hand }) {
     () => {
       const listener = () => {
         if (cardsRef.current) {
-          setSize(index === 1 ? cardsRef.current.clientWidth : cardsRef.current.clientHeight);
+          setSize(index === 1 || index === 3 ? cardsRef.current.clientWidth : cardsRef.current.clientHeight);
         }
         if (firstCardRef.current) {
-          setCardSize(index === 1 ? firstCardRef.current.clientWidth : firstCardRef.current.clientHeight);
+          setCardSize(index === 1 || index === 3 ? firstCardRef.current.clientWidth : firstCardRef.current.clientHeight);
         }
       };
 
@@ -50,12 +54,12 @@ export function PlayerHand ({ userInfo, index, playerNumber, hand }) {
     2: -90
   };
   const cardCount = Math.max(count || 0, (cards || []).length);
-  const position = (size - cardSize) / (cardCount - 1);
+  const position = (size - cardSize) / Math.max(cardCount - 1, 4);
   const renderedCards = [];
   const rotate = rotateMap[index];
   for (let i = 0; i < cardCount; i++) {
     let style;
-    if (index === 1) {
+    if (index === 1 || index === 3) {
       style = { left: i * position };
     } else {
       style = { top: i * position };
@@ -74,7 +78,10 @@ export function PlayerHand ({ userInfo, index, playerNumber, hand }) {
     <li className='hand'>
       <div className='hand-wrapper'>
         <div className='name-wrapper'>
-          <h3>{name || `Player ${playerNumber || index}`}</h3>
+          <header>
+            <h3>{name || `Player ${playerNumber || index}`}</h3>
+            {cribOwner ? <span className='owns-crib'><FontAwesomeIcon icon={faCrown} /></span> : null}
+          </header>
         </div>
         <div className='cards-wrapper'>
           <ul className='cards' ref={cardsCallback}>
@@ -89,28 +96,80 @@ export function PlayerHand ({ userInfo, index, playerNumber, hand }) {
 
 export function Game ({ user }) {
   const state = React.useContext(RoomContext);
-  const { users, userInfo, hands, dispatch, cut, crib, phase, play } = state;
+  const { hands, dispatch, cut, phase, play, cribOwner } = state;
+  const order = state.order || [];
+  const crib = state.crib || [];
+  const userInfo = state.userInfo || {};
   const hand = ((hands || {})[user] || {}).cards || [];
+  const watchers = Object.keys(userInfo).filter(u => order.indexOf(u) < 0);
+  watchers.sort();
   const [selectedCard, handleChange] = useRadioCards(hand);
 
-  // TODO: This should be done on the server
-  const cribMapped = React.useMemo(
-    () => crib && crib.cards ? { cards: crib.cards.map(({ card }) => card) } : (crib || { count: 0 }),
-    [crib]
+  const [isShowingOptions, setIsShowingOptions] = React.useState(false);
+  const handleShowModal = React.useCallback(() => setIsShowingOptions(true), []);
+  const handleHideModal = React.useCallback(() => setIsShowingOptions(false), []);
+
+  React.useEffect(
+    () => {
+      if (phase === 'cut' || phase === 'count' || phase === 'shuffle') {
+        handleChange({ target: {} });
+      }
+    },
+    [handleChange, phase]
   );
 
-  // TODO: order player hands based on this player
-  const handsToRender = (users || []).filter(otherUser => user !== otherUser && (hands || {})[otherUser]);
+  let myIndex;
+  for (let i = 0; i < order.length; i++) {
+    if (order[i] === user) {
+      myIndex = i;
+      break;
+    }
+  }
+  const handsToRender = [];
+  for (let i = 0; i < order.length; i++) {
+    let index;
+
+    if (myIndex === undefined) {
+      index = i;
+    } else {
+      if (i === order.length - 1) {
+        break;
+      }
+      index = (myIndex + i + 1) % order.length;
+    }
+
+    const user = order[index];
+    handsToRender.push(
+      <PlayerHand
+        key={i}
+        index={i}
+        userInfo={userInfo[user]}
+        hand={(hands || {})[user]}
+        cribOwner={user === cribOwner}
+      />
+    );
+  }
+
+  const canPlay = phase === 'play' || (phase === 'crib' && hand.length === 5);
 
   return (
-    <div className='game'>
-      <section className='hand player'>
-        <h2><UserInfo /><span>'s (Your) Hand</span></h2>
+    <div className={myIndex === undefined ? 'not-a-player game' : 'game'}>
+      <button type='button' className='options' onClick={handleShowModal}><FontAwesomeIcon icon={faCog} /><span className='sr-only'>Options</span></button>
+      <Modal isOpen={isShowingOptions} onRequestClose={handleHideModal}>
+        <button onClick={handleHideModal}>Close Options</button>
+        <Options order={order} watchers={watchers} userInfo={userInfo} dispatch={dispatch} isShowingOptions={isShowingOptions} />
+      </Modal>
+      <section className={!canPlay && phase !== 'count' ? 'hand player disabled' : 'hand player'}>
+        <header>
+          <h2><UserInfo /><span>'s (Your) Hand</span></h2>
+          {cribOwner !== user ? null : <span className='owns-crib'><FontAwesomeIcon icon={faCrown} /></span>}
+        </header>
         <Cards
-          cards={hand || []}
+          cards={hand}
           name='card'
           onChange={handleChange}
           selectedCard={selectedCard}
+          disabled={!canPlay}
           min={1}
         />
 
@@ -138,9 +197,8 @@ export function Game ({ user }) {
               </>
             )}
             <div>
-
               <div>
-                <button onClick={() => dispatch({ type: 'cut' })}>cut</button>
+                <button disabled={phase !== 'cut'} onClick={() => dispatch({ type: 'cut' })}>cut</button>
                 <button onClick={() => dispatch({ type: 'shuffle' })}>shuffle</button>
               </div>
             </div>
@@ -148,8 +206,9 @@ export function Game ({ user }) {
 
           <section className='crib'>
             <h2>Crib</h2>
-            <Cards className='mini' mini cards={cribMapped.cards} count={cribMapped.count} min={4} />
-            <Cards className='full' cards={cribMapped.cards} count={cribMapped.count} min={4} />
+            <div className='crib-owner'>{cribOwner ? `${(userInfo[cribOwner] || {}).name || cribOwner}'s` : <>&nbsp;</>}</div>
+            <Cards className='mini' mini cards={crib.cards} count={crib.count} min={4} placeholderBack />
+            <Cards className='full' cards={crib.cards} count={crib.count} min={4} />
           </section>
         </div>
 
@@ -162,24 +221,64 @@ export function Game ({ user }) {
         <section className='users'>
           <h2 className='sr-only'>Players</h2>
           <ol>
-            <PlayerHand
-              index={0}
-              userInfo={(userInfo || {})[handsToRender[0]]}
-              hand={(hands || {})[handsToRender[0]]}
-            />
-            <PlayerHand
-              index={1}
-              userInfo={(userInfo || {})[handsToRender[1]]}
-              hand={(hands || {})[handsToRender[1]]}
-            />
-            <PlayerHand
-              index={2}
-              userInfo={(userInfo || {})[handsToRender[2]]}
-              hand={(hands || {})[handsToRender[2]]}
-            />
+            {handsToRender}
           </ol>
         </section>
+
+        {myIndex === undefined ? <p>You are {(userInfo[user] || {}).name}</p> : null}
       </div>
     </div>
+  );
+}
+
+function Options ({ order, watchers, userInfo, isShowingOptions, dispatch }) {
+  const [allOrder, setAllOrder] = React.useState([...order, ...watchers]);
+
+  const handleSetPlayer = React.useCallback(
+    () => {
+      console.log('called');
+      dispatch({ type: 'order', order: allOrder.slice(0, 4) });
+    },
+    [dispatch, allOrder]
+  );
+  React.useEffect(
+    () => { setAllOrder(null); },
+    [isShowingOptions]
+  );
+
+  const handleReorderPlayer = React.useCallback(
+    event => {
+      const index = parseInt(event.currentTarget.getAttribute('data-index'), 10);
+      const direction = event.currentTarget.getAttribute('data-dir') === 'u' ? -1 : 1;
+
+      const newOrder = [...allOrder];
+      newOrder[index] = allOrder[index + direction];
+      newOrder[index + direction] = allOrder[index];
+
+      setAllOrder(newOrder);
+    },
+    [allOrder]
+  );
+
+  if (allOrder === null) {
+    // Quick hack to just get this done.
+    setAllOrder([...order, ...watchers]);
+    return null;
+  }
+
+  return (
+    <>
+      <h2>Player Order</h2>
+      <ol>
+        {allOrder.map((u, i) => (
+          <li key={u} className={allOrder.indexOf(u) < 4 ? undefined : 'watcher'}>
+            {(userInfo[u] || {}).name || u}
+            {i === 0 ? null : <button type='button' onClick={handleReorderPlayer} data-index={i} data-dir='u'><FontAwesomeIcon icon={faArrowCircleUp} /><span className='sr-only'>Move Up</span></button>}
+            {i === allOrder.length - 1 ? null : <button type='button' onClick={handleReorderPlayer} data-index={i} data-dir='d'><FontAwesomeIcon icon={faArrowCircleDown} /><span className='sr-only'>Move Down</span></button>}
+          </li>
+        ))}
+      </ol>
+      <button onClick={handleSetPlayer}>Set Players</button>
+    </>
   );
 }

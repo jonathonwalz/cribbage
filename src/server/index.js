@@ -27,59 +27,58 @@ const createRoom = (id = uuid()) => {
   const userInfo = {};
   let roomTimeout;
 
-  let deck;
-  let hands;
-  let cut;
-  let crib;
-  let play;
-  let phase;
-  function shuffleDeck () {
-    // TODO: Use better shuffle
+  let deck = null;
+  let hands = null;
+  let cut = null;
+  let crib = null;
+  let play = null;
+  let phase = 'pre-shuffle';
+  let order = [];
+  let cribOwner = null;
+  function resetDeck () {
     deck = [...baseDeck];
     crib = [];
-    shuffle(deck);
     hands = {};
     play = [];
     cut = null;
-    phase = 'shuffle';
+    phase = 'pre-shuffle';
 
     sendState();
+  }
+  function shuffleDeck () {
+    // TODO: Use better shuffle
+    resetDeck();
+    shuffle(deck);
+    phase = 'shuffle';
 
-    const users = [...new Set(connectionMap.values())];
-    const toDeal = [];
-    for (let i = 0; i < 5; i++) {
-      toDeal.push([...users]);
+    if (cribOwner === null) {
+      cribOwner = 0;
+    } else {
+      cribOwner = (cribOwner + 1) % 4;
     }
-
+    let count = 5;
+    let currentUser = 0;
     function deal () {
-      const round = toDeal.pop();
-
-      function dealCards () {
-        const user = round.pop();
-
-        if (user) {
-          const card = deck.pop();
-          hands[user] = (hands[user] || []);
-          hands[user].push(card);
-
-          sendState();
-          setTimeout(dealCards, 750);
-        } else {
-          setTimeout(deal, 750);
-        }
+      if (currentUser === order.length) {
+        currentUser = 0;
+        count--;
       }
 
-      if (round) {
-        dealCards();
-      } else {
+      if (count === 0) {
         phase = 'crib';
-        sendState();
-      }
-    }
+      } else {
+        const user = order[(cribOwner + currentUser++ + 1) % 4];
+        const card = deck.pop();
+        hands[user] = (hands[user] || []);
+        hands[user].push(card);
 
+        setTimeout(deal, 750);
+      }
+      sendState();
+    }
     deal();
   }
-  shuffleDeck();
+  resetDeck();
 
   function sendState () {
     const users = [...new Set(connectionMap.values())];
@@ -88,10 +87,14 @@ const createRoom = (id = uuid()) => {
       hands: {},
       users: users,
       userInfo,
+      order,
       cut,
       phase,
       play,
-      crib: phase === 'count' ? { cards: crib, count: crib.length } : { count: crib.length },
+      crib: phase === 'count'
+        ? { cards: crib.map(({ card }) => card), count: crib.length }
+        : { count: crib.length },
+      cribOwner: order[cribOwner],
       deck: deck.length
     };
 
@@ -148,12 +151,30 @@ const createRoom = (id = uuid()) => {
       } else if (message.type === 'shuffle') {
         shuffleDeck();
       } else if (message.type === 'cut') {
-        cut = deck.pop();
-        sendState();
+        if (phase === 'cut') {
+          phase = 'play';
+          cut = deck.pop();
+          sendState();
+        }
+      } else if (message.type === 'order') {
+        const users = new Set(connectionMap.values());
+        if (message.order.length !== 4 || message.order.some(u => !users.has(u))) {
+          return;
+        }
+
+        order = message.order;
+        phase = 'pre-shuffle';
+        resetDeck();
       } else if (message.type === 'play') {
+        if (!order.includes(user) || (phase !== 'crib' && phase !== 'play')) {
+          return;
+        }
         if (phase === 'crib' && crib.some(c => c.user === user)) {
           return;
         }
+        // if (phase === 'play' && turn !== user) {
+        //   return;
+        // }
 
         const hand = hands[user] || [];
         let card;
@@ -175,7 +196,7 @@ const createRoom = (id = uuid()) => {
         }
 
         if (phase === 'crib' && crib.length === 4) {
-          phase = 'play';
+          phase = 'cut';
         } else if (phase === 'play') {
           let hasCard = false;
           for (const h of Object.values(hands)) {
@@ -199,7 +220,7 @@ const createRoom = (id = uuid()) => {
       // This is ... not ideal
       let name = dogNames.allRandom();
       while (Object.keys(userInfo).length <= dogNames.length) {
-        if (Object.values(userInfo).some(info => name === info)) {
+        if (Object.values(userInfo).some(info => name === info.name)) {
           name = dogNames.allRandom();
         } else {
           break;
@@ -209,6 +230,10 @@ const createRoom = (id = uuid()) => {
         name = user;
       }
       userInfo[user] = { name };
+    }
+
+    if (order.length < 4 && !order.includes(user)) {
+      order.push(user);
     }
 
     conn.write(JSON.stringify({ type: 'join', room: id, clientRoomId, user }));

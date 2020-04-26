@@ -29,19 +29,19 @@ export function useRadioCards (cards) {
   return [selectedCard, handleChange];
 }
 
-function RadioCard ({ card, onChange, selectedCardValue }) {
+function RadioCard ({ card, onChange, disabled, selectedCardValue }) {
   const radioValue = `${card.value}-${card.suit}`;
 
   return (
     <label>
-      <input type='radio' name='card' value={radioValue} onChange={onChange} checked={selectedCardValue === radioValue} />
+      <input type='radio' name='card' value={radioValue} onChange={onChange} checked={selectedCardValue === radioValue} disabled={disabled} />
       <MiniCard card={card} />
       <Card card={card} />
     </label>
   );
 }
 
-export function Cards ({ cards, count, mini, className, name, onChange, selectedCard, min }) {
+export function Cards ({ cards, count, mini, className, name, disabled, onChange, selectedCard, min, placeholderBack }) {
   const selectedCardValue = selectedCard ? `${selectedCard.value}-${selectedCard.suit}` : undefined;
 
   const renderedCards = [];
@@ -59,6 +59,7 @@ export function Cards ({ cards, count, mini, className, name, onChange, selected
               card={card}
               onChange={onChange}
               selectedCardValue={selectedCardValue}
+              disabled={disabled}
             />
           )}
         </li>
@@ -73,7 +74,7 @@ export function Cards ({ cards, count, mini, className, name, onChange, selected
       renderedCards.push((
         <li key={i} className='space-holder'>
           {!onChange
-            ? <RenderCard card={{ suit: 'spade', value: 1 }} />
+            ? <RenderCard back={placeholderBack} card={{ suit: 'spade', value: 1 }} />
             : <label><MiniCard card={{ suit: 'spade', value: 1 }} /><Card card={{ suit: 'spade', value: 1 }} /></label>}
         </li>
       ));
