@@ -41,7 +41,7 @@ function RadioCard ({ card, onChange, selectedCardValue }) {
   );
 }
 
-export function Cards ({ cards, count, mini, className, name, onChange, selectedCard }) {
+export function Cards ({ cards, count, mini, className, name, onChange, selectedCard, min }) {
   const selectedCardValue = selectedCard ? `${selectedCard.value}-${selectedCard.suit}` : undefined;
 
   const renderedCards = [];
@@ -65,6 +65,18 @@ export function Cards ({ cards, count, mini, className, name, onChange, selected
       );
     } else {
       renderedCards.push(<li key={i}><RenderCard back /></li>);
+    }
+  }
+
+  if (min && renderedCards.length < min) {
+    for (let i = renderedCards.length; i < min; i++) {
+      renderedCards.push((
+        <li key={i} className='space-holder'>
+          {!onChange
+            ? <RenderCard card={{ suit: 'spade', value: 1 }} />
+            : <label><MiniCard card={{ suit: 'spade', value: 1 }} /><Card card={{ suit: 'spade', value: 1 }} /></label>}
+        </li>
+      ));
     }
   }
 

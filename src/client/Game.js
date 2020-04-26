@@ -5,7 +5,7 @@ import { Cards, useRadioCards } from './Cards';
 import { Card, MiniCard } from './Card';
 import { UserInfo } from './UserInfo';
 
-export function PlayerHand ({ user, userInfo, index, hand }) {
+export function PlayerHand ({ userInfo, index, playerNumber, hand }) {
   const { cards, count } = hand || {};
   const { name } = userInfo || {};
 
@@ -74,10 +74,13 @@ export function PlayerHand ({ user, userInfo, index, hand }) {
     <li className='hand'>
       <div className='hand-wrapper'>
         <div className='name-wrapper'>
-          <h3>{name || user}</h3>
+          <h3>{name || `Player ${playerNumber || index}`}</h3>
         </div>
         <div className='cards-wrapper'>
-          <ul className='cards' ref={cardsCallback}>{renderedCards}</ul>
+          <ul className='cards' ref={cardsCallback}>
+            {renderedCards.length ? null : <li className='space-holder'><Card back /></li>}
+            {renderedCards}
+          </ul>
         </div>
       </div>
     </li>
@@ -92,11 +95,12 @@ export function Game ({ user }) {
 
   // TODO: This should be done on the server
   const cribMapped = React.useMemo(
-    () => !Array.isArray(crib) ? crib : crib.map(({ card }) => card),
+    () => crib && crib.cards ? { cards: crib.cards.map(({ card }) => card) } : (crib || { count: 0 }),
     [crib]
   );
 
   // TODO: order player hands based on this player
+  const handsToRender = (users || []).filter(otherUser => user !== otherUser && (hands || {})[otherUser]);
 
   return (
     <div className='game'>
@@ -107,6 +111,7 @@ export function Game ({ user }) {
           name='card'
           onChange={handleChange}
           selectedCard={selectedCard}
+          min={1}
         />
 
         <div className='action'>
@@ -143,29 +148,35 @@ export function Game ({ user }) {
 
           <section className='crib'>
             <h2>Crib</h2>
-            <Cards className='mini' mini cards={Array.isArray(cribMapped) ? cribMapped : []} count={Array.isArray(cribMapped) ? cribMapped.length : (cribMapped || 0)} />
-            <Cards className='full' cards={Array.isArray(cribMapped) ? cribMapped : []} count={Array.isArray(cribMapped) ? cribMapped.length : (cribMapped || 0)} />
+            <Cards className='mini' mini cards={cribMapped.cards} count={cribMapped.count} min={4} />
+            <Cards className='full' cards={cribMapped.cards} count={cribMapped.count} min={4} />
           </section>
         </div>
 
         <section className='play'>
           <h2>Play</h2>
-          <Cards className='mini' mini cards={play} />
-          <Cards className='full' cards={play} />
+          <Cards className='mini' mini cards={play} min={1} />
+          <Cards className='full' cards={play} min={1} />
         </section>
 
         <section className='users'>
           <h2 className='sr-only'>Players</h2>
           <ol>
-            {(users || []).filter(otherUser => user !== otherUser && (hands || {})[otherUser]).map((otherUser, i) => (
-              <PlayerHand
-                key={otherUser}
-                index={i}
-                user={otherUser}
-                userInfo={(userInfo || {})[otherUser]}
-                hand={(hands || {})[otherUser]}
-              />
-            ))}
+            <PlayerHand
+              index={0}
+              userInfo={(userInfo || {})[handsToRender[0]]}
+              hand={(hands || {})[handsToRender[0]]}
+            />
+            <PlayerHand
+              index={1}
+              userInfo={(userInfo || {})[handsToRender[1]]}
+              hand={(hands || {})[handsToRender[1]]}
+            />
+            <PlayerHand
+              index={2}
+              userInfo={(userInfo || {})[handsToRender[2]]}
+              hand={(hands || {})[handsToRender[2]]}
+            />
           </ol>
         </section>
       </div>

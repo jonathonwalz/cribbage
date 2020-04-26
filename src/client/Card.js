@@ -25,7 +25,10 @@ const cardMappingData = {
 };
 
 const textStyle = { textAnchor: 'middle', fontSize: 15.42 };
-export function MiniCard ({ card, horizontal }) {
+export function MiniCard ({ back, card, horizontal }) {
+  if (back) {
+    return <Card back />;
+  }
   if (!card) {
     return null;
   }
@@ -85,7 +88,7 @@ function CardSVG ({ className, rotate, label, link }) {
     >
       <use xlinkHref={link} {...transform} />
     </svg>
-  )
+  );
 }
 
 export function Card ({ card, back, rotate }) {

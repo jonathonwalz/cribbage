@@ -4,6 +4,7 @@ $card-aspect-ratio: 169.075 / 244.64;
 
 html {
   box-sizing: border-box;
+  background-color: rgb(22, 85, 34);
   // background-image: url(./felt.jpg);
   background-repeat: repeat;
 }
@@ -202,7 +203,7 @@ $hand-background: rgba(255, 255, 255, .2);
   min-height: 300px;
 }
 
-.pre-play, .play {
+.pre-play, section.play {
   background-color: rgba(255, 255, 255, .1);
   box-shadow: 0px 0px 5px 1px rgba(255,255,255,0.1);
   border-radius: 20px;
@@ -229,6 +230,10 @@ $hand-background: rgba(255, 255, 255, .2);
 
   .card-large {
     display: none;
+  }
+  .card-back {
+    display: block;
+    width: 44px;
   }
   @media (min-width:768px) {
     .card-small {
@@ -272,6 +277,7 @@ $hand-background: rgba(255, 255, 255, .2);
 }
 
 .crib {
+  max-width: 100px;
   li {
     display: inline-block;
     width: 40px;
@@ -280,7 +286,11 @@ $hand-background: rgba(255, 255, 255, .2);
   .full {
     display: none;
   }
+  @media (min-width:450px) {
+    max-width: none;
+  }
   @media (min-width:768px) {
+    max-width: none;
     .mini {
       display: none;
     }
@@ -472,7 +482,7 @@ $hand-background: rgba(255, 255, 255, .2);
   border: none;
 }
 
-.play {
+section.play {
   flex-direction: column;
   text-align: center;
   align-items: center;
@@ -485,6 +495,7 @@ $hand-background: rgba(255, 255, 255, .2);
   }
   li {
     flex: 0 0 auto;
+    width: 40px;
   }
   .full {
     display: none;
@@ -509,6 +520,10 @@ $hand-background: rgba(255, 255, 255, .2);
   width:1px;
   height:1px;
   overflow:hidden;
+}
+
+.space-holder {
+  visibility: hidden;
 }
 
 .debug {

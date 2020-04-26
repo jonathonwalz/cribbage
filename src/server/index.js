@@ -91,7 +91,7 @@ const createRoom = (id = uuid()) => {
       cut,
       phase,
       play,
-      crib: phase === 'count' ? crib : crib.count,
+      crib: phase === 'count' ? { cards: crib, count: crib.length } : { count: crib.length },
       deck: deck.length
     };
 
