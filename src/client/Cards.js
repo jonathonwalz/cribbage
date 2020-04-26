@@ -29,11 +29,22 @@ export function useRadioCards (cards) {
   return [selectedCard, handleChange];
 }
 
-function RadioCard ({ card, onChange, disabled, selectedCardValue }) {
+function RadioCard ({ card, onChange, disabled, selectedCardValue, contextMenuAsClick }) {
   const radioValue = `${card.value}-${card.suit}`;
 
+  const handleContextMenu = React.useCallback(
+    () => {
+      if (!contextMenuAsClick || !onChange) {
+        return;
+      }
+
+      return onChange({ target: { value: radioValue } });
+    },
+    [onChange, contextMenuAsClick, radioValue]
+  );
+
   return (
-    <label>
+    <label onContextMenu={handleContextMenu}>
       <input type='radio' name='card' value={radioValue} onChange={onChange} checked={selectedCardValue === radioValue} disabled={disabled} />
       <MiniCard card={card} />
       <Card card={card} />
@@ -41,7 +52,7 @@ function RadioCard ({ card, onChange, disabled, selectedCardValue }) {
   );
 }
 
-export function Cards ({ cards, count, mini, className, name, disabled, playTotal, onChange, selectedCard, min, placeholderBack }) {
+export function Cards ({ cards, count, mini, className, name, disabled, playTotal, onChange, selectedCard, min, placeholderBack, contextMenuAsClick }) {
   const selectedCardValue = selectedCard ? `${selectedCard.value}-${selectedCard.suit}` : undefined;
 
   const renderedCards = [];
@@ -59,6 +70,7 @@ export function Cards ({ cards, count, mini, className, name, disabled, playTota
               card={card}
               onChange={onChange}
               selectedCardValue={selectedCardValue}
+              contextMenuAsClick={contextMenuAsClick}
               disabled={disabled || (playTotal ? playTotal + Math.min(card.value, 10) > 31 : false)}
             />
           )}

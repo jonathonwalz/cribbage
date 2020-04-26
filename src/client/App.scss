@@ -732,11 +732,17 @@ button.options {
   z-index: 100;
 }
 
+.ReactModal__Body--open {
+  overflow: hidden;
+}
+
 .ReactModal__Overlay {
   z-index: 1000;
 }
 
 .ReactModal__Content {
+  overflow: auto;
+
   ol li {
     margin: 5px 0;
   }
@@ -754,6 +760,11 @@ button.options {
   }
   .watcher + .watcher {
     margin-top: 0;
+  }
+
+  .right-click {
+    display: block;
+    margin-top: 2rem;
   }
 }
 

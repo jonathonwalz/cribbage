@@ -38,6 +38,9 @@ const createRoom = (id = uuid()) => {
   let turn = null;
   let playTotal = 0;
   let goCount = 0;
+  const settings = {
+    contextMenuAsClick: false
+  };
   function resetPlay () {
     resetDeck();
     cribOwner = null;
@@ -109,7 +112,8 @@ const createRoom = (id = uuid()) => {
       cribOwner: order[cribOwner] || null,
       turn: order[turn] || null,
       playTotal,
-      deck: deck.length
+      deck: deck.length,
+      settings
     };
 
     for (const [conn, user] of connectionMap) {
@@ -162,6 +166,18 @@ const createRoom = (id = uuid()) => {
       } else if (message.type === 'userInfo') {
         userInfo[user] = message.info;
         sendState();
+      } else if (message.type === 'settings') {
+        for (const [key, value] of Object.entries(message.settings)) {
+          switch (key) {
+            case 'contextMenuAsClick':
+              settings.contextMenuAsClick = !!value;
+              break;
+            default:
+              break;
+          }
+        }
+
+        sendState();
       } else if (message.type === 'shuffle') {
         if (phase !== 'count') {
           if (cribOwner !== null) {
@@ -177,7 +193,7 @@ const createRoom = (id = uuid()) => {
         }
       } else if (message.type === 'order') {
         const users = new Set(connectionMap.values());
-        if (message.order.length !== 4 || message.order.some(u => !users.has(u))) {
+        if (message.order.length !== 4 || message.order.some(u => !users.has(u) && !userInfo[u])) {
           return;
         }
 

@@ -96,10 +96,11 @@ export function PlayerHand ({ userInfo, index, playerNumber, hand, cribOwner, tu
 
 export function Game ({ user }) {
   const state = React.useContext(RoomContext);
-  const { hands, dispatch, cut, phase, play, cribOwner, turn, playTotal } = state;
+  const { hands, dispatch, cut, phase, play, cribOwner, turn, playTotal, settings } = state;
   const order = state.order || [];
   const crib = state.crib || [];
   const userInfo = state.userInfo || {};
+  const { contextMenuAsClick } = settings || {};
   const hand = ((hands || {})[user] || {}).cards || [];
   const watchers = Object.keys(userInfo).filter(u => order.indexOf(u) < 0);
   watchers.sort();
@@ -151,6 +152,32 @@ export function Game ({ user }) {
     );
   }
 
+  React.useEffect(
+    () => {
+      if (!contextMenuAsClick) {
+        return;
+      }
+
+      const preventDefault = event => { event.preventDefault(); };
+      window.addEventListener('contextmenu', preventDefault);
+      return () => window.removeEventListener('contextmenu', preventDefault);
+    },
+    [contextMenuAsClick]
+  );
+
+  const handlePlayCard = React.useCallback(
+    () => dispatch({ type: 'play', card: selectedCard }),
+    [dispatch, selectedCard]
+  );
+  const handleGo = React.useCallback(
+    () => dispatch({ type: 'play', go: true }),
+    [dispatch]
+  );
+  const handleCutShuffle = React.useCallback(
+    () => dispatch({ type: phase === 'cut' ? 'cut' : 'shuffle' }),
+    [dispatch, phase]
+  );
+
   let canPlay = phase === 'crib' && hand.length === 5;
   if (phase === 'play' && turn === user) {
     for (let i = 0; i < hand.length; i++) {
@@ -167,7 +194,7 @@ export function Game ({ user }) {
       <button type='button' className='options' onClick={handleShowModal}><FontAwesomeIcon icon={faCog} /><span className='sr-only'>Options</span></button>
       <Modal isOpen={isShowingOptions} onRequestClose={handleHideModal}>
         <button onClick={handleHideModal}>Close Options</button>
-        <Options order={order} watchers={watchers} userInfo={userInfo} dispatch={dispatch} isShowingOptions={isShowingOptions} />
+        <Options order={order} watchers={watchers} userInfo={userInfo} dispatch={dispatch} isShowingOptions={isShowingOptions} settings={settings} />
       </Modal>
       <section className={'hand player' + (!canPlay && phase !== 'count' ? ' disabled' : '') + (hasAction ? ' has-action' : '')}>
         <header>
@@ -179,6 +206,7 @@ export function Game ({ user }) {
           name='card'
           onChange={handleChange}
           selectedCard={selectedCard}
+          contextMenuAsClick={contextMenuAsClick}
           disabled={!canPlay}
           playTotal={playTotal}
           min={1}
@@ -187,12 +215,12 @@ export function Game ({ user }) {
         <div className='action'>
           {phase === 'play' && turn === user && !canPlay
             ? (
-              <button className='play' onClick={() => dispatch({ type: 'play', go: true })}>
+              <button className='play' onClick={handleGo} onContextMenu={handleGo}>
                 Go
               </button>
             ) : null}
           {!selectedCard ? null : (
-            <button className='play' onClick={() => dispatch({ type: 'play', card: selectedCard })}>
+            <button className='play' onClick={handlePlayCard} onContextMenu={handlePlayCard}>
               {phase === 'crib' ? 'Put' : 'Play'} <MiniCard card={selectedCard} horizontal /> {phase === 'crib' ? 'in crib' : ''}
             </button>
           )}
@@ -211,7 +239,8 @@ export function Game ({ user }) {
             )}
             <button
               disabled={phase !== 'cut' && phase !== 'count' && phase !== 'crib' && phase !== 'pre-shuffle'}
-              onClick={() => dispatch({ type: phase === 'cut' ? 'cut' : 'shuffle' })}
+              onClick={handleCutShuffle}
+              onContextMenu={handleCutShuffle}
               className={phase === 'cut' || phase === 'count' || phase === 'pre-shuffle' ? 'has-action' : undefined}
             >
               {phase === 'cut' ? 'cut' : (phase === 'crib' ? 're-deal' : 'deal')}
@@ -246,12 +275,12 @@ export function Game ({ user }) {
   );
 }
 
-function Options ({ order, watchers, userInfo, isShowingOptions, dispatch }) {
+function Options ({ order, watchers, userInfo, isShowingOptions, settings, dispatch }) {
   const [allOrder, setAllOrder] = React.useState([...order, ...watchers]);
+  settings = settings || {};
 
   const handleSetPlayer = React.useCallback(
     () => {
-      console.log('called');
       dispatch({ type: 'order', order: allOrder.slice(0, 4) });
     },
     [dispatch, allOrder]
@@ -259,6 +288,13 @@ function Options ({ order, watchers, userInfo, isShowingOptions, dispatch }) {
   React.useEffect(
     () => { setAllOrder(null); },
     [isShowingOptions]
+  );
+
+  const handleSetContextMenuAsClick = React.useCallback(
+    ({ target: { checked } }) => {
+      dispatch({ type: 'settings', settings: { contextMenuAsClick: checked } });
+    },
+    [dispatch]
   );
 
   const handleReorderPlayer = React.useCallback(
@@ -294,6 +330,7 @@ function Options ({ order, watchers, userInfo, isShowingOptions, dispatch }) {
         ))}
       </ol>
       <button onClick={handleSetPlayer}>Set Players</button>
+      <label className='right-click'><input type='checkbox' checked={!!settings.contextMenuAsClick} onChange={handleSetContextMenuAsClick} /> Disable right click for all players and treat it as a click for game actions.</label>
     </>
   );
 }
