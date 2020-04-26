@@ -52,18 +52,19 @@ function RadioCard ({ card, onChange, disabled, selectedCardValue, contextMenuAs
   );
 }
 
-export function Cards ({ cards, count, mini, className, name, disabled, playTotal, onChange, selectedCard, min, placeholderBack, contextMenuAsClick }) {
+export function Cards ({ cards, count, mini, className, name, disabled, playTotal, onChange, selectedCard, min, placeholderBack, contextMenuAsClick, zIndexReverse }) {
   const selectedCardValue = selectedCard ? `${selectedCard.value}-${selectedCard.suit}` : undefined;
-
   const renderedCards = [];
   const RenderCard = mini ? MiniCard : Card;
+
   for (let i = 0; i < Math.max(count || 0, (cards || []).length); i++) {
+    const style = !zIndexReverse ? undefined : { zIndex: -i };
     if (i < (cards || []).length) {
       const cardOrCardUserPair = cards[i];
       const card = cardOrCardUserPair.card || cardOrCardUserPair;
 
       renderedCards.push(
-        <li key={`${card.value}-${card.suit}`} className={cards[i].lastCard ? 'last-card' : undefined}>
+        <li key={`${card.value}-${card.suit}`} className={cards[i].lastCard ? 'last-card' : undefined} style={style}>
           {!onChange ? <RenderCard card={card} /> : (
             <RadioCard
               name={name}
@@ -77,7 +78,7 @@ export function Cards ({ cards, count, mini, className, name, disabled, playTota
         </li>
       );
     } else {
-      renderedCards.push(<li key={i}><RenderCard back /></li>);
+      renderedCards.push(<li key={i} style={style}><RenderCard back /></li>);
     }
   }
 

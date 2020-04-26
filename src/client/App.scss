@@ -608,7 +608,7 @@ $hand-background: rgba(255, 255, 255, .2);
   width: calc(1em + 16px + 4px);
   padding: 5px 8px;
   margin: 0 2px;
-  border: 1px dotted rgba(0, 0, 0, 0.3);
+  border: 1px dotted #000;
   border-radius: 5px;
   background-color: #fff;
 }
@@ -637,7 +637,10 @@ section.play {
   }
   li {
     flex: 0 0 auto;
-    width: 40px;
+    width: 20px;
+    .card {
+      width: 45px;
+    }
     margin-left: 3px;
   }
   .full {
@@ -650,7 +653,10 @@ section.play {
     .full {
       display: flex;
       li {
-        width: 75px
+        .card {
+          width: 75px;
+        }
+        width: 25px;
       }
     }
   }
@@ -662,6 +668,22 @@ section.play {
     color: #fff;
     font-size: .8em;
     font-weight: 300;
+  }
+
+  li + .last-card {
+    margin-left: 10px + 20px;
+    @media (min-width:768px) {
+      margin-left: 20px + 50px;
+    }
+  }
+  .last-card, .last-card ~ li {
+    svg {
+      background-color: #fff;
+      border-radius: 5px;
+      > text, > use {
+        opacity: .6;
+      }
+    }
   }
 
   .last-card {

@@ -259,8 +259,8 @@ export function Game ({ user }) {
         <section className='play'>
           <h2>Play</h2>
           <span className='play-total'>{playTotal || <>&nbsp;</>}</span>
-          <Cards className='mini' mini cards={play} min={1} />
-          <Cards className='full' cards={play} min={1} />
+          <Cards className='mini' mini cards={play} min={1} zIndexReverse />
+          <Cards className='full' cards={play} min={1} zIndexReverse />
         </section>
 
         <section className='users'>
