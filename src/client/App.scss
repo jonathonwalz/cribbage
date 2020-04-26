@@ -5,8 +5,8 @@ $card-aspect-ratio: 169.075 / 244.64;
 html {
   box-sizing: border-box;
   background-color: rgb(22, 85, 34);
-  // background-image: url(./felt.jpg);
   background-repeat: repeat;
+  height: 100%;
 }
 *, *:before, *:after {
   box-sizing: inherit;
@@ -18,6 +18,10 @@ html, body {
   margin: 0;
 }
 
+body {
+  min-height: 100%;
+}
+
 h2, h3, ul, ol {
   margin: 0;
   padding: 0;
@@ -25,7 +29,12 @@ h2, h3, ul, ol {
 }
 
 #root {
-  min-height: 100vh;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  min-height: 100%;
+
   display: flex;
   flex-direction: column;
   align-items: stretch;
@@ -151,6 +160,10 @@ $current-turn-color: rgb(221, 130, 44);
     align-self: stretch;
     margin: 0;
     padding: 6px 6px 0;
+    padding: 6px
+      calc(6px + env(safe-area-inset-right, 0))
+      env(safe-area-inset-bottom, 0)
+      calc(6px + env(safe-area-inset-left, 0));
     background-color:rgb(240, 240, 240);
 
     li {
@@ -239,6 +252,10 @@ $hand-background: rgba(255, 255, 255, .2);
 
   position: relative;
   padding: ($hand-width + 1rem) ($hand-width + 1rem) 0;
+  padding: calc(#{$hand-width + 1rem} + env(safe-area-inset-top, 0))
+    calc(#{$hand-width + 1rem} + env(safe-area-inset-right, 0))
+    env(safe-area-inset-bottom, 0)
+    calc(#{$hand-width + 1rem} + env(safe-area-inset-left, 0));
   min-height: 300px;
 }
 
@@ -398,6 +415,7 @@ $hand-background: rgba(255, 255, 255, .2);
     display: inline;
   }
 
+  $name-wrapper-width: 8rem;
   &:nth-child(1),
   &:nth-child(3) {
     box-shadow: 0px 0px 10px 2px rgba(255,255,255,0.5);
@@ -417,9 +435,9 @@ $hand-background: rgba(255, 255, 255, .2);
     left: auto;
 
     .name-wrapper {
-      position: relative;
+      position: absolute;
       top: 50%;
-      width: 8rem;
+      width: $name-wrapper-width;
       transform: translateY(-50%);
     }
 
@@ -442,10 +460,14 @@ $hand-background: rgba(255, 255, 255, .2);
   }
   &:nth-child(1) {
     left: 0;
+    width: calc(#{$hand-width} + env(safe-area-inset-left, 0));
     border-top-left-radius: 0;
     border-bottom-left-radius: 0;
+    .name-wrapper {
+      right: -$name-wrapper-width / 2 + 0.5rem;
+    }
     header {
-      transform: rotate(90deg) translateY(0.5rem);
+      transform: rotate(90deg);
     }
     .cards-wrapper {
       right: 1rem;
@@ -456,10 +478,14 @@ $hand-background: rgba(255, 255, 255, .2);
   }
   &:nth-child(3) {
     right: 0;
+    width: calc(#{$hand-width} + env(safe-area-inset-right, 0));
     border-top-right-radius: 0;
     border-bottom-right-radius: 0;
+    .name-wrapper {
+      left: -$name-wrapper-width / 2 + 0.5rem;
+    }
     header {
-      transform: rotate(270deg) translateY(-$hand-width + 0.5rem);
+      transform: rotate(270deg);
     }
     .cards-wrapper {
       left: 1rem;

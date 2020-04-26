@@ -1,0 +1,8 @@
+{
+  "short_name": "Cribbage",
+  "start_url": "/#/r/default",
+  "background_color": "#165522",
+  "display": "standalone",
+  "scope": "/",
+  "theme_color": "#165522"
+}
