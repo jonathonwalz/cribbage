@@ -96,7 +96,7 @@ export function PlayerHand ({ userInfo, index, playerNumber, hand, cribOwner }) 
 
 export function Game ({ user }) {
   const state = React.useContext(RoomContext);
-  const { hands, dispatch, cut, phase, play, cribOwner } = state;
+  const { hands, dispatch, cut, phase, play, cribOwner, turn, playTotal } = state;
   const order = state.order || [];
   const crib = state.crib || [];
   const userInfo = state.userInfo || {};
@@ -150,7 +150,15 @@ export function Game ({ user }) {
     );
   }
 
-  const canPlay = phase === 'play' || (phase === 'crib' && hand.length === 5);
+  let canPlay = phase === 'crib' && hand.length === 5;
+  if (phase === 'play' && turn === user) {
+    for (let i = 0; i < hand.length; i++) {
+      if (playTotal + Math.min(hand[i].value, 10) <= 31) {
+        canPlay = true;
+        break;
+      }
+    }
+  }
 
   return (
     <div className={myIndex === undefined ? 'not-a-player game' : 'game'}>
@@ -174,12 +182,14 @@ export function Game ({ user }) {
         />
 
         <div className='action'>
+          {phase === 'play' && turn === user && !canPlay
+            ? (
+              <button className='play' onClick={() => dispatch({ type: 'play', go: true })}>
+                Go
+              </button>
+            ) : null}
           {!selectedCard ? null : (
-            <button
-              disabled={phase === 'crib' ? hand.length <= 4 : hands.length === 0}
-              className='play'
-              onClick={() => dispatch({ type: 'play', card: selectedCard })}
-            >
+            <button className='play' onClick={() => dispatch({ type: 'play', card: selectedCard })}>
               {phase === 'crib' ? 'Put' : 'Play'} <MiniCard card={selectedCard} horizontal /> {phase === 'crib' ? 'in crib' : ''}
             </button>
           )}

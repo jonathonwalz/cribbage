@@ -209,8 +209,7 @@ h2, h3, ul, ol {
   &.disabled .cards {
     label input[type=radio]:disabled + .card-small,
     label input[type=radio]:disabled + .card-small + .card-large {
-      opacity: .3;
-      cursor: default;
+      opacity: .75;
     }
   }
 }
