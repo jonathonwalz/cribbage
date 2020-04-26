@@ -41,7 +41,7 @@ function RadioCard ({ card, onChange, disabled, selectedCardValue }) {
   );
 }
 
-export function Cards ({ cards, count, mini, className, name, disabled, onChange, selectedCard, min, placeholderBack }) {
+export function Cards ({ cards, count, mini, className, name, disabled, playTotal, onChange, selectedCard, min, placeholderBack }) {
   const selectedCardValue = selectedCard ? `${selectedCard.value}-${selectedCard.suit}` : undefined;
 
   const renderedCards = [];
@@ -52,14 +52,14 @@ export function Cards ({ cards, count, mini, className, name, disabled, onChange
       const card = cardOrCardUserPair.card || cardOrCardUserPair;
 
       renderedCards.push(
-        <li key={`${card.value}-${card.suit}`}>
+        <li key={`${card.value}-${card.suit}`} className={cards[i].lastCard ? 'last-card' : undefined}>
           {!onChange ? <RenderCard card={card} /> : (
             <RadioCard
               name={name}
               card={card}
               onChange={onChange}
               selectedCardValue={selectedCardValue}
-              disabled={disabled}
+              disabled={disabled || (playTotal ? playTotal + Math.min(card.value, 10) > 31 : false)}
             />
           )}
         </li>

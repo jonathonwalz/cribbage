@@ -44,6 +44,8 @@ h2, h3, ul, ol {
   color: gold;
 }
 
+$current-turn-color: rgb(221, 130, 44);
+
 .game .player {
   display: flex;
   flex-direction: column;
@@ -56,6 +58,10 @@ h2, h3, ul, ol {
     top: -15px;
     right: -15px;
     transform: rotate(45deg);
+  }
+
+  &.has-action .action {
+    box-shadow: 0px -20px 40px 20px $current-turn-color;
   }
 
   header {
@@ -277,6 +283,35 @@ $hand-background: rgba(255, 255, 255, .2);
       width: 75px;
     }
   }
+
+  button {
+    margin-top: 10px;
+    border: 1px solid #000;
+    background-color: white;
+    border-radius: 3px;
+    cursor: pointer;
+    padding: 3px 6px;
+    color: #000;
+  }
+  button:focus, button:hover {
+    background-color: rgb(51, 170, 51);
+    color: #fff;
+    &:disabled {
+      color: #000;
+      background-color: #fff;
+    }
+  }
+  button:active {
+    transform: scale(0.9);
+  }
+  button:disabled {
+    opacity: .5;
+    cursor: default;
+    transform: none;
+  }
+  .has-action {
+    box-shadow: 0px 0px 10px 7px $current-turn-color;
+  }
 }
 
 .users {
@@ -367,6 +402,10 @@ $hand-background: rgba(255, 255, 255, .2);
   &:nth-child(3) {
     box-shadow: 0px 0px 10px 2px rgba(255,255,255,0.5);
     background-color: rgba(255, 255, 255, .6);
+    &.has-action {
+      box-shadow: 0px 0px 10px 2px $current-turn-color;
+      background-color: transparentize($color: $current-turn-color, $amount: 0.2);
+    }
     width: $hand-width;
     top: 70%;
     transform: translateY(-70%);
@@ -447,6 +486,10 @@ $hand-background: rgba(255, 255, 255, .2);
       margin: 0 auto;
 
       display: flex;
+    }
+    &.has-action .hand-wrapper {
+      box-shadow: 0px 0px 10px 2px $current-turn-color;
+      background-color: transparentize($color: $current-turn-color, $amount: 0.2);
     }
 
     .cards-wrapper {
@@ -546,6 +589,7 @@ $hand-background: rgba(255, 255, 255, .2);
 }
 
 section.play {
+  position: relative;
   flex-direction: column;
   text-align: center;
   align-items: center;
@@ -559,6 +603,7 @@ section.play {
   li {
     flex: 0 0 auto;
     width: 40px;
+    margin-left: 3px;
   }
   .full {
     display: none;
@@ -572,6 +617,36 @@ section.play {
       li {
         width: 75px
       }
+    }
+  }
+
+  .play-total {
+    position: absolute;
+    top: 5px;
+    left: 5px;
+    color: #fff;
+    font-size: .8em;
+    font-weight: 300;
+  }
+
+  .last-card {
+    margin-left: 10px;
+    @media (min-width:768px) {
+      margin-left: 20px;
+    }
+    position: relative;
+
+    &::before {
+      position: absolute;
+      display: block;
+      height: 90%;
+      top: 5%;
+      left: -5px;
+      @media (min-width:768px) {
+        left: -10px;
+      }
+      content: " ";
+      border-left: 1px solid #000;
     }
   }
 }

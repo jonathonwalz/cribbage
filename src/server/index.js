@@ -238,12 +238,14 @@ const createRoom = (id = uuid()) => {
               goCount = 0;
               playTotal += Math.min(card.value, 10);
               if (playTotal === 31) {
+                (play[0] || {}).lastCard = true;
                 playTotal = 0;
               }
             } else {
               goCount++;
               if (goCount === 4) {
                 goCount = 0;
+                (play[0] || {}).lastCard = true;
                 playTotal = 0;
               }
             }
@@ -253,6 +255,7 @@ const createRoom = (id = uuid()) => {
               goCount++;
               if (goCount === 4) {
                 goCount = 0;
+                (play[0] || {}).lastCard = true;
                 playTotal = 0;
               }
             }

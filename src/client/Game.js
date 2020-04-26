@@ -9,7 +9,7 @@ import { Cards, useRadioCards } from './Cards';
 import { Card, MiniCard } from './Card';
 import { UserInfo } from './UserInfo';
 
-export function PlayerHand ({ userInfo, index, playerNumber, hand, cribOwner }) {
+export function PlayerHand ({ userInfo, index, playerNumber, hand, cribOwner, turn }) {
   const { cards, count } = hand || {};
   const { name } = userInfo || {};
 
@@ -75,7 +75,7 @@ export function PlayerHand ({ userInfo, index, playerNumber, hand, cribOwner }) 
   }
 
   return (
-    <li className='hand'>
+    <li className={turn || count === 5 ? 'hand has-action' : 'hand'}>
       <div className='hand-wrapper'>
         <div className='name-wrapper'>
           <header>
@@ -146,6 +146,7 @@ export function Game ({ user }) {
         userInfo={userInfo[user]}
         hand={(hands || {})[user]}
         cribOwner={user === cribOwner}
+        turn={user === turn && phase === 'play'}
       />
     );
   }
@@ -159,6 +160,7 @@ export function Game ({ user }) {
       }
     }
   }
+  const hasAction = canPlay || (phase === 'play' && turn === user);
 
   return (
     <div className={myIndex === undefined ? 'not-a-player game' : 'game'}>
@@ -167,7 +169,7 @@ export function Game ({ user }) {
         <button onClick={handleHideModal}>Close Options</button>
         <Options order={order} watchers={watchers} userInfo={userInfo} dispatch={dispatch} isShowingOptions={isShowingOptions} />
       </Modal>
-      <section className={!canPlay && phase !== 'count' ? 'hand player disabled' : 'hand player'}>
+      <section className={'hand player' + (!canPlay && phase !== 'count' ? ' disabled' : '') + (hasAction ? ' has-action' : '')}>
         <header>
           <h2><UserInfo /><span>'s (Your) Hand</span></h2>
           {cribOwner !== user ? null : <span className='owns-crib'><FontAwesomeIcon icon={faCrown} /></span>}
@@ -178,6 +180,7 @@ export function Game ({ user }) {
           onChange={handleChange}
           selectedCard={selectedCard}
           disabled={!canPlay}
+          playTotal={playTotal}
           min={1}
         />
 
@@ -206,16 +209,13 @@ export function Game ({ user }) {
                 <Card className='full' card={cut} />
               </>
             )}
-            <div>
-              <div>
-                <button
-                  disabled={phase !== 'cut' && phase !== 'count' && phase !== 'crib' && phase !== 'pre-shuffle'}
-                  onClick={() => dispatch({ type: phase === 'cut' ? 'cut' : 'shuffle' })}
-                >
-                  {phase === 'cut' ? 'cut' : (phase === 'crib' ? 're-deal' : 'deal')}
-                </button>
-              </div>
-            </div>
+            <button
+              disabled={phase !== 'cut' && phase !== 'count' && phase !== 'crib' && phase !== 'pre-shuffle'}
+              onClick={() => dispatch({ type: phase === 'cut' ? 'cut' : 'shuffle' })}
+              className={phase === 'cut' || phase === 'count' || phase === 'pre-shuffle' ? 'has-action' : undefined}
+            >
+              {phase === 'cut' ? 'cut' : (phase === 'crib' ? 're-deal' : 'deal')}
+            </button>
           </section>
 
           <section className='crib'>
@@ -228,6 +228,7 @@ export function Game ({ user }) {
 
         <section className='play'>
           <h2>Play</h2>
+          <span className='play-total'>{playTotal || <>&nbsp;</>}</span>
           <Cards className='mini' mini cards={play} min={1} />
           <Cards className='full' cards={play} min={1} />
         </section>
