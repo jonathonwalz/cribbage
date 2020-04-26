@@ -64,7 +64,7 @@ export function PlayerHand ({ userInfo, index, playerNumber, hand, cribOwner, tu
     } else {
       style = { top: i * position };
     }
-    if (index === 2) {
+    if (index === 2 || index === 1) {
       style.zIndex = -i;
     }
     if (i < (cards || []).length) {
