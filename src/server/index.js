@@ -38,6 +38,10 @@ const createRoom = (id = uuid()) => {
   let turn = null;
   let playTotal = 0;
   let goCount = 0;
+  function resetPlay () {
+    resetDeck();
+    cribOwner = null;
+  }
   function resetDeck () {
     deck = [...baseDeck];
     crib = [];
@@ -45,7 +49,6 @@ const createRoom = (id = uuid()) => {
     play = [];
     cut = null;
     phase = 'pre-shuffle';
-    cribOwner = null;
     turn = null;
     playTotal = 0;
     goCount = 0;
@@ -63,6 +66,7 @@ const createRoom = (id = uuid()) => {
     } else {
       cribOwner = (cribOwner + 1) % 4;
     }
+
     turn = cribOwner + 1;
     let count = 5;
     let currentUser = 0;
@@ -86,7 +90,7 @@ const createRoom = (id = uuid()) => {
     }
     deal();
   }
-  resetDeck();
+  resetPlay();
 
   function sendState () {
     const users = [...new Set(connectionMap.values())];
@@ -102,8 +106,8 @@ const createRoom = (id = uuid()) => {
       crib: phase === 'count'
         ? { cards: crib.map(({ card }) => card), count: crib.length }
         : { count: crib.length },
-      cribOwner: order[cribOwner],
-      turn: order[turn],
+      cribOwner: order[cribOwner] || null,
+      turn: order[turn] || null,
       playTotal,
       deck: deck.length
     };
@@ -159,6 +163,11 @@ const createRoom = (id = uuid()) => {
         userInfo[user] = message.info;
         sendState();
       } else if (message.type === 'shuffle') {
+        if (phase !== 'count') {
+          if (cribOwner !== null) {
+            cribOwner--;
+          }
+        }
         shuffleDeck();
       } else if (message.type === 'cut') {
         if (phase === 'cut') {
@@ -174,7 +183,7 @@ const createRoom = (id = uuid()) => {
 
         order = message.order;
         phase = 'pre-shuffle';
-        resetDeck();
+        resetPlay();
       } else if (message.type === 'play') {
         if (!order.includes(user) || (phase !== 'crib' && phase !== 'play')) {
           return;
