@@ -45,6 +45,10 @@ const createRoom = (id = uuid()) => {
     play = [];
     cut = null;
     phase = 'pre-shuffle';
+    cribOwner = null;
+    turn = null;
+    playTotal = 0;
+    goCount = 0;
 
     sendState();
   }
@@ -182,6 +186,7 @@ const createRoom = (id = uuid()) => {
           return;
         }
 
+        let card;
         const hand = hands[user] || [];
         if (phase === 'play' && message.go) {
           for (let i = 0; i < hand.length; i++) {
@@ -189,36 +194,26 @@ const createRoom = (id = uuid()) => {
               return;
             }
           }
-
-          turn = (turn + 1) % 4;
-          goCount++;
-          if (goCount === 4) {
-            goCount = 0;
-            playTotal = 0;
-          }
-          sendState();
-          return;
-        }
-
-        let card;
-        for (let i = 0; i < hand.length; i++) {
-          if (hand[i].suit === message.card.suit && hand[i].value === message.card.value) {
-            card = hand[i];
-            if (phase === 'crib') {
-              crib.push({ card, user });
-            } else if (phase === 'play') {
-              if (playTotal + Math.min(hand[i].value, 10) > 31) {
-                return;
+        } else {
+          for (let i = 0; i < hand.length; i++) {
+            if (hand[i].suit === message.card.suit && hand[i].value === message.card.value) {
+              card = hand[i];
+              if (phase === 'crib') {
+                crib.push({ card, user });
+              } else if (phase === 'play') {
+                if (playTotal + Math.min(hand[i].value, 10) > 31) {
+                  return;
+                }
+                play.unshift({ card, user });
               }
-              play.unshift({ card, user });
+              hand.splice(i, 1);
+              break;
             }
-            hand.splice(i, 1);
-            break;
           }
-        }
 
-        if (!card) {
-          return;
+          if (!card) {
+            return;
+          }
         }
 
         if (phase === 'crib' && crib.length === 4) {
@@ -227,11 +222,6 @@ const createRoom = (id = uuid()) => {
           let hasCard = false;
 
           turn = (turn + 1) % 4;
-          goCount = 0;
-          playTotal += Math.min(card.value, 10);
-          if (playTotal === 31) {
-            playTotal = 0;
-          }
 
           for (const h of Object.values(hands)) {
             if (h && h.length) {
@@ -242,6 +232,29 @@ const createRoom = (id = uuid()) => {
             phase = 'count';
             for (const { card, user } of play) {
               hands[user].unshift(card);
+            }
+          } else {
+            if (card) {
+              goCount = 0;
+              playTotal += Math.min(card.value, 10);
+              if (playTotal === 31) {
+                playTotal = 0;
+              }
+            } else {
+              goCount++;
+              if (goCount === 4) {
+                goCount = 0;
+                playTotal = 0;
+              }
+            }
+
+            while ((hands[order[turn]] || []).length === 0) {
+              turn = (turn + 1) % 4;
+              goCount++;
+              if (goCount === 4) {
+                goCount = 0;
+                playTotal = 0;
+              }
             }
           }
         }

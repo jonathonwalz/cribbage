@@ -208,8 +208,12 @@ export function Game ({ user }) {
             )}
             <div>
               <div>
-                <button disabled={phase !== 'cut'} onClick={() => dispatch({ type: 'cut' })}>cut</button>
-                <button onClick={() => dispatch({ type: 'shuffle' })}>shuffle</button>
+                <button
+                  disabled={phase !== 'cut' && phase !== 'count' && phase !== 'crib' && phase !== 'pre-shuffle'}
+                  onClick={() => dispatch({ type: phase === 'cut' ? 'cut' : 'shuffle' })}
+                >
+                  {phase === 'cut' ? 'cut' : (phase === 'crib' ? 're-deal' : 'deal')}
+                </button>
               </div>
             </div>
           </section>
