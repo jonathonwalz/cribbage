@@ -255,6 +255,9 @@ const createRoom = (id = uuid()) => {
           }
           if (!hasCard) {
             phase = 'count';
+            if (card) {
+              playTotal += Math.min(card.value, 10);
+            }
             for (const { card, user } of play) {
               hands[user].unshift(card);
             }
