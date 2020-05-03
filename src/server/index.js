@@ -70,7 +70,7 @@ const createRoom = (id = uuid()) => {
       cribOwner = (cribOwner + 1) % 4;
     }
 
-    turn = cribOwner + 1;
+    turn = (cribOwner + 1) % 4;
     let count = 5;
     let currentUser = 0;
     function deal () {
