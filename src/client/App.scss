@@ -266,7 +266,7 @@ $hand-background: rgba(255, 255, 255, .2);
   min-height: 300px;
 }
 
-.pre-play, section.play {
+.pre-play, .play-wrapper {
   background-color: rgba(255, 255, 255, .1);
   box-shadow: 0px 0px 5px 1px rgba(255,255,255,0.1);
   border-radius: 20px;
@@ -279,6 +279,14 @@ $hand-background: rgba(255, 255, 255, .2);
 
   h2 {
     color: #fff;
+  }
+}
+
+.play-wrapper {
+  flex-direction: column;
+  align-items: stretch;
+  @media (min-width:768px) {
+    flex-direction: row;  
   }
 }
 
@@ -577,7 +585,7 @@ $hand-background: rgba(255, 255, 255, .2);
     }
 
     .cards > li { 
-      overflow-y: hidden;
+      overflow: hidden;
       .card {
         top: calc(100% - 2rem);
       }
@@ -639,9 +647,9 @@ $hand-background: rgba(255, 255, 255, .2);
 
 section.play {
   position: relative;
-  flex-direction: column;
   text-align: center;
-  align-items: center;
+  flex: 1 1 auto;
+  min-width: 50px; // Stop this from causing an overflow
 
   .cards {
     display: flex;
@@ -719,6 +727,29 @@ section.play {
       content: " ";
       border-left: 1px solid #000;
     }
+  }
+}
+
+section.scores {
+  flex: 0 1 auto;
+  position: relative;
+  color: #fff;
+
+  @media (min-width:768px) {
+    padding-left: 20px;
+    &::before {
+      position: absolute;
+      display: block;
+      height: 90%;
+      top: 5%;
+      left: 10px;
+      content: " ";
+      border-left: 1px solid #000;
+    }
+  }
+
+  dd {
+    margin-bottom: 6px;
   }
 }
 
@@ -809,7 +840,9 @@ button.options {
 
   .checkbox-setting {
     display: block;
-    margin-top: 2rem;
+    &:first-of-type, &:nth-of-type(2) {
+      margin-top: 2rem;
+    }
   }
 }
 

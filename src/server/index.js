@@ -31,6 +31,179 @@ function canHandPlay (hand, playTotal) {
   return false;
 }
 
+function getFifteens (cards, usedCards = [], startingIndex = 0, count = 0) {
+  let fifteens = [];
+
+  for (let i = startingIndex; i < cards.length; i++) {
+    const card = cards[i];
+    const newCount = count + Math.min(card.value, 10);
+    if (newCount === 15) {
+      fifteens.push([...usedCards, card]);
+    } else if (newCount < 15) {
+      fifteens = [...fifteens, ...getFifteens(cards, [...usedCards, card], i + 1, newCount)];
+    }
+  }
+
+  return fifteens;
+}
+
+function getRuns (cards, isPegging = false) {
+  if (cards.length < 3) {
+    return [];
+  }
+
+  if (isPegging) {
+    let longestRun;
+    for (let i = 3; i < cards.length + 1; i++) {
+      const sortedCards = cards.slice(0, i);
+      sortedCards.sort(({ value: a }, { value: b }) => a - b);
+
+      if (sortedCards[0].value + sortedCards.length - 1 !== sortedCards[sortedCards.length - 1].value) {
+        continue;
+      }
+
+      let isNotARun = false;
+      for (let j = 1; j < sortedCards.length; j++) {
+        if (sortedCards[j - 1].value + 1 !== sortedCards[j].value) {
+          isNotARun = true;
+          break;
+        }
+      }
+
+      if (!isNotARun) {
+        longestRun = sortedCards;
+      }
+    }
+
+    return longestRun ? [longestRun] : [];
+  }
+
+  const sortedCards = [...cards];
+  sortedCards.sort(({ value: a }, { value: b }) => a - b);
+
+  let runs = [];
+  let currentRuns = [[]];
+  for (let i = 0; i < sortedCards.length; i++) {
+    const card = sortedCards[i];
+    const value = card.value;
+    const run = currentRuns[currentRuns.length - 1];
+    const lastValue = (run[run.length - 1] || {}).value || -1;
+
+    if (lastValue + 1 === value) {
+      for (const run of currentRuns) {
+        run.push(card);
+      }
+    } else {
+      if (run.length >= 3) {
+        runs = [...runs, ...currentRuns];
+      }
+      currentRuns = [[card]];
+    }
+
+    const runDuplicates = [];
+    while (sortedCards[i + 1] && sortedCards[i + 1].value === value) {
+      i++;
+      runDuplicates.push(sortedCards[i]);
+    }
+
+    if (runDuplicates.length) {
+      const currentRunCount = currentRuns.length;
+      for (const card of runDuplicates) {
+        for (let j = 0; j < currentRunCount; j++) {
+          const duplicate = [...currentRuns[j]];
+          duplicate[duplicate.length - 1] = card;
+          currentRuns.push(duplicate);
+        }
+      }
+    }
+  }
+
+  if (currentRuns[0].length >= 3) {
+    runs = [...runs, ...currentRuns];
+  }
+
+  return runs;
+}
+
+const pairCountScores = { 1: 0, 2: 2, 3: 6, 4: 12 };
+function getPairs (cards, isPegging = false) {
+  if (cards.length < 2) {
+    return {};
+  }
+
+  const cardCounts = { [cards[0].value]: [cards[0]] };
+  for (let i = 1; i < cards.length; i++) {
+    const card = cards[i];
+    const value = card.value;
+    if (!cardCounts[value]) {
+      if (isPegging) {
+        break;
+      }
+
+      cardCounts[value] = [card];
+    } else {
+      cardCounts[value].push(card);
+    }
+  }
+
+  Object.entries(cardCounts).forEach(([value, cards]) => {
+    const score = pairCountScores[cards.length];
+    if (!score) {
+      delete cardCounts[value];
+    }
+  });
+
+  return cardCounts;
+}
+
+function getScore (cards, cut, isCrib) {
+  const isPegging = !cut;
+  let flush = [];
+  let nobs;
+  if (isPegging) {
+    const previousPlayIndex = cards.findIndex(({ lastCard }) => lastCard);
+    if (previousPlayIndex === 0) {
+      return 0;
+    }
+
+    cards = cards.slice(0, previousPlayIndex < 0 ? undefined : previousPlayIndex).map(({ card }) => card);
+  } else {
+    if (isCrib) {
+      cards = cards.map(({ card }) => card);
+    }
+
+    const cardsWithCut = cards = [...cards, cut];
+    const testSuit = (cards[0] || {}).suit;
+    const isFlush = cards.every(({ suit }) => suit === testSuit);
+    if (isFlush) {
+      flush = cut.suit === testSuit ? cardsWithCut : isCrib ? [] : cards;
+    }
+
+    nobs = cards.find(({ suit, value }) => value === 11 && suit === cut.suit);
+    cards = cardsWithCut;
+  }
+
+  const fifteens = isPegging ? 0 : getFifteens(cards);
+  const runs = getRuns(cards, isPegging);
+  const pairs = getPairs(cards, isPegging);
+
+  return {
+    durning: isPegging ? 'play' : 'count',
+    value: (fifteens.length * 2) +
+      runs.reduce((a, v) => a + v.length, 0) +
+      Object.values(pairs).reduce((a, cards) => a + pairCountScores[cards.length], 0) +
+      flush.length +
+      (nobs ? 1 : 0),
+    fifteens,
+    runs,
+    pairs,
+    flush,
+    nobs,
+    isCrib,
+    cards
+  };
+}
+
 const rooms = new Map();
 const createRoom = (id = uuid()) => {
   const connectionMap = new Map();
@@ -42,6 +215,7 @@ const createRoom = (id = uuid()) => {
   let cut = null;
   let crib = null;
   let play = null;
+  let scores = [];
   let phase = 'pre-shuffle';
   let order = [];
   let cribOwner = null;
@@ -50,11 +224,13 @@ const createRoom = (id = uuid()) => {
   let goCount = 0;
   const settings = {
     contextMenuAsClick: false,
-    autoGo: false
+    autoGo: true,
+    showScores: false
   };
   function resetPlay () {
     resetDeck();
     cribOwner = null;
+    scores = [];
   }
   function resetDeck () {
     deck = [...baseDeck];
@@ -123,6 +299,7 @@ const createRoom = (id = uuid()) => {
       cribOwner: order[cribOwner] || null,
       turn: order[turn] || null,
       playTotal,
+      scores,
       deck: deck.length,
       settings
     };
@@ -140,6 +317,14 @@ const createRoom = (id = uuid()) => {
 
       conn.write(JSON.stringify({ type: 'state', room: id, state }));
     }
+  }
+
+  function addScore (user, score) {
+    if (!score.value) {
+      return;
+    }
+
+    scores.push({ user, ...score });
   }
 
   const connect = (conn, joinMessage) => {
@@ -186,6 +371,9 @@ const createRoom = (id = uuid()) => {
             case 'autoGo':
               settings.autoGo = !!value;
               break;
+            case 'showScores':
+              settings.showScores = !!value;
+              break;
             default:
               break;
           }
@@ -203,6 +391,9 @@ const createRoom = (id = uuid()) => {
         if (phase === 'cut') {
           phase = 'play';
           cut = deck.pop();
+          if (cut.value === 11) {
+            addScore(order[cribOwner], { value: 2, type: 'nobs', during: 'cut' });
+          }
           sendState();
         }
       } else if (message.type === 'order') {
@@ -265,27 +456,42 @@ const createRoom = (id = uuid()) => {
               hasCard = true;
             }
           }
+
+          if (card) {
+            goCount = 0;
+            playTotal += Math.min(card.value, 10);
+
+            addScore(user, getScore(play));
+
+            if (playTotal === 15) {
+              addScore(user, { value: 2, type: '15', during: 'play' });
+            } else if (playTotal === 31) {
+              (play[0] || {}).lastCard = true;
+              addScore(user, { value: 2, type: '31', during: 'play' });
+              playTotal = 0;
+            } else if (!hasCard) {
+              addScore(user, { value: 1, type: 'last-card', during: 'play' });
+            }
+          }
+
           if (!hasCard) {
             phase = 'count';
-            if (card) {
-              playTotal += Math.min(card.value, 10);
-            }
             for (const { card, user } of play) {
               hands[user].unshift(card);
             }
+            for (let i = 1; i <= 4; i++) {
+              const player = order[(cribOwner + i) % 4];
+              addScore(player, getScore(hands[player], cut));
+            }
+            addScore(order[cribOwner], getScore(crib, cut, true));
           } else {
-            if (card) {
-              goCount = 0;
-              playTotal += Math.min(card.value, 10);
-              if (playTotal === 31) {
-                (play[0] || {}).lastCard = true;
-                playTotal = 0;
-              }
-            } else {
+            if (!card) {
               goCount++;
               if (goCount === 4) {
                 goCount = 0;
                 (play[0] || {}).lastCard = true;
+                const lastCardUser = (play[0] || {}).user;
+                addScore(lastCardUser, { value: 1, type: 'last-card', during: 'play' });
                 playTotal = 0;
               }
             }
@@ -296,6 +502,8 @@ const createRoom = (id = uuid()) => {
               if (goCount === 4) {
                 goCount = 0;
                 (play[0] || {}).lastCard = true;
+                const lastCardUser = (play[0] || {}).user;
+                addScore(lastCardUser, { value: 1, type: 'last-card', during: 'play' });
                 playTotal = 0;
               }
             }

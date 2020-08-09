@@ -9,7 +9,7 @@ import { Cards, useRadioCards } from './Cards';
 import { Card, MiniCard } from './Card';
 import { UserInfo } from './UserInfo';
 
-export function PlayerHand ({ userInfo, index, playerNumber, hand, cribOwner, turn }) {
+export function PlayerHand ({ userInfo, index, hand, cribOwner, turn }) {
   const { cards, count } = hand || {};
   const { name } = userInfo || {};
 
@@ -34,7 +34,7 @@ export function PlayerHand ({ userInfo, index, playerNumber, hand, cribOwner, tu
       <div className='hand-wrapper'>
         <div className='name-wrapper'>
           <header>
-            <h3>{name || `Player ${playerNumber || index}`}</h3>
+            <h3>{name || `Player ${index}`}</h3>
             {cribOwner ? <span className='owns-crib'><FontAwesomeIcon icon={faCrown} /></span> : null}
           </header>
         </div>
@@ -49,10 +49,41 @@ export function PlayerHand ({ userInfo, index, playerNumber, hand, cribOwner, tu
   );
 }
 
+function Scores ({ userInfo, teams, scores }) {
+  const scoreSums = {};
+  const userTeamMap = {};
+  for (let i = 0; i < teams.length; i++) {
+    scoreSums[i] = 0;
+    for (const user of teams[i]) {
+      userTeamMap[user] = i;
+    }
+  }
+
+  for (const { user, value } of (scores || [])) {
+    scoreSums[userTeamMap[user]] += value;
+    if (scoreSums[userTeamMap[user]] >= 121) {
+      scoreSums[userTeamMap[user]] = 121;
+      break;
+    }
+  }
+
+  return (
+    <dl>
+      {teams.map((users, i) => (
+        <React.Fragment key={i}>
+          <dt>{users.map(user => (userInfo[user] || {}).name || user).join(' and ')}</dt>
+          <dd>{scoreSums[i]}</dd>
+        </React.Fragment>
+      ))}
+    </dl>
+  );
+}
+
 export function Game ({ user }) {
   const state = React.useContext(RoomContext);
-  const { hands, dispatch, cut, phase, play, cribOwner, turn, playTotal, settings } = state;
+  const { hands, dispatch, cut, phase, play, cribOwner, turn, playTotal, scores, settings } = state;
   const order = state.order || [];
+  const teams = [[order[0], order[2]].filter(i => i), [order[1], order[3]].filter(i => i)].filter(a => a.length);
   const crib = state.crib || [];
   const userInfo = state.userInfo || {};
   const { contextMenuAsClick } = settings || {};
@@ -61,6 +92,7 @@ export function Game ({ user }) {
   watchers.sort();
   const [selectedCard, handleChange] = useRadioCards(hand);
 
+  const [localShowScores, setLocalShowScores] = React.useState();
   const [isShowingOptions, setIsShowingOptions] = React.useState(false);
   const handleShowModal = React.useCallback(() => setIsShowingOptions(true), []);
   const handleHideModal = React.useCallback(() => setIsShowingOptions(false), []);
@@ -144,13 +176,14 @@ export function Game ({ user }) {
     }
   }
   const hasAction = canPlay || (phase === 'play' && turn === user);
+  const showScores = localShowScores === false ? false : (localShowScores || !!(settings || {}).showScores);
 
   return (
     <div className={myIndex === undefined ? 'not-a-player game' : 'game'}>
       <button type='button' className='options' onClick={handleShowModal}><FontAwesomeIcon icon={faCog} /><span className='sr-only'>Options</span></button>
       <Modal isOpen={isShowingOptions} onRequestClose={handleHideModal}>
         <button onClick={handleHideModal}>Close Options</button>
-        <Options order={order} watchers={watchers} userInfo={userInfo} dispatch={dispatch} isShowingOptions={isShowingOptions} settings={settings} />
+        <Options order={order} watchers={watchers} userInfo={userInfo} dispatch={dispatch} isShowingOptions={isShowingOptions} settings={settings} localShowScores={localShowScores} setLocalShowScores={setLocalShowScores} />
       </Modal>
       <section className={'hand player' + (!canPlay && phase !== 'count' ? ' disabled' : '') + (hasAction ? ' has-action' : '')}>
         <header>
@@ -211,12 +244,21 @@ export function Game ({ user }) {
           </section>
         </div>
 
-        <section className='play'>
-          <h2>Play</h2>
-          <span className='play-total'>{playTotal || <>&nbsp;</>}</span>
-          <Cards className='mini' mini cards={play} min={1} zIndexReverse />
-          <Cards className='full' cards={play} min={1} zIndexReverse />
-        </section>
+        <div className='play-wrapper'>
+          <section className='play'>
+            <h2>Play</h2>
+            <span className='play-total'>{playTotal || <>&nbsp;</>}</span>
+            <Cards className='mini' mini cards={play} min={1} zIndexReverse />
+            <Cards className='full' cards={play} min={1} zIndexReverse />
+          </section>
+
+          {!showScores ? null : (
+            <section className='scores'>
+              <h2>Scores</h2>
+              <Scores userInfo={userInfo} teams={teams} scores={scores} />
+            </section>
+          )}
+        </div>
 
         <section className='users'>
           <h2 className='sr-only'>Players</h2>
@@ -231,7 +273,7 @@ export function Game ({ user }) {
   );
 }
 
-function Options ({ order, watchers, userInfo, isShowingOptions, settings, dispatch }) {
+function Options ({ order, watchers, userInfo, isShowingOptions, settings, setLocalShowScores, localShowScores, dispatch }) {
   const [allOrder, setAllOrder] = React.useState([...order, ...watchers]);
   settings = settings || {};
 
@@ -246,19 +288,12 @@ function Options ({ order, watchers, userInfo, isShowingOptions, settings, dispa
     [isShowingOptions]
   );
 
-  const handleSetContextMenuAsClick = React.useCallback(
-    ({ target: { checked } }) => {
-      dispatch({ type: 'settings', settings: { contextMenuAsClick: checked } });
-    },
-    [dispatch]
-  );
+  const handleCheckboxSettingFactory = setting => ({ target: { checked } }) => {
+    dispatch({ type: 'settings', settings: { [setting]: checked } });
+  };
 
-  const handleSetAutoGo = React.useCallback(
-    ({ target: { checked } }) => {
-      dispatch({ type: 'settings', settings: { autoGo: checked } });
-    },
-    [dispatch]
-  );
+  const localShowScoresChecked = localShowScores === false ? false : (localShowScores || !!settings.showScores);
+  const handleToggleShowScoresLocally = ({ target: { checked } }) => { setLocalShowScores(checked); };
 
   const handleReorderPlayer = React.useCallback(
     event => {
@@ -293,8 +328,10 @@ function Options ({ order, watchers, userInfo, isShowingOptions, settings, dispa
         ))}
       </ol>
       <button onClick={handleSetPlayer}>Set Players</button>
-      <label className='checkbox-setting'><input type='checkbox' checked={!!settings.contextMenuAsClick} onChange={handleSetContextMenuAsClick} /> Disable right click for all players and treat it as a click for game actions.</label>
-      <label className='checkbox-setting'><input type='checkbox' checked={!!settings.autoGo} onChange={handleSetAutoGo} /> Automatically skip players with a "go".</label>
+      <label className='checkbox-setting'><input type='checkbox' checked={localShowScoresChecked} onChange={handleToggleShowScoresLocally} /> Show scores.</label>
+      <label className='checkbox-setting'><input type='checkbox' checked={!!settings.contextMenuAsClick} onChange={handleCheckboxSettingFactory('contextMenuAsClick')} /> Disable right click for all players and treat it as a click for game actions.</label>
+      <label className='checkbox-setting'><input type='checkbox' checked={!!settings.autoGo} onChange={handleCheckboxSettingFactory('autoGo')} /> Automatically skip players with a "go".</label>
+      <label className='checkbox-setting'><input type='checkbox' checked={!!settings.showScores} onChange={handleCheckboxSettingFactory('showScores')} /> Default showing scores for everyone.</label>
     </>
   );
 }
