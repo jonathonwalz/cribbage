@@ -13,64 +13,19 @@ export function PlayerHand ({ userInfo, index, playerNumber, hand, cribOwner, tu
   const { cards, count } = hand || {};
   const { name } = userInfo || {};
 
-  const [size, setSize] = React.useState(0);
-  const cardsRef = React.useRef();
-  const cardsCallback = React.useCallback(card => {
-    cardsRef.current = card;
-    if (cardsRef.current) {
-      setSize(index === 1 || index === 3 ? cardsRef.current.clientWidth : cardsRef.current.clientHeight);
-    }
-  }, [index]);
-
-  const [cardSize, setCardSize] = React.useState(0);
-  const firstCardRef = React.useRef();
-  const firstCardCallback = React.useCallback(card => {
-    firstCardRef.current = card;
-    if (firstCardRef.current) {
-      setCardSize(index === 1 || index === 3 ? firstCardRef.current.clientWidth : firstCardRef.current.clientHeight);
-    }
-  }, [index]);
-
-  React.useEffect(
-    () => {
-      const listener = () => {
-        if (cardsRef.current) {
-          setSize(index === 1 || index === 3 ? cardsRef.current.clientWidth : cardsRef.current.clientHeight);
-        }
-        if (firstCardRef.current) {
-          setCardSize(index === 1 || index === 3 ? firstCardRef.current.clientWidth : firstCardRef.current.clientHeight);
-        }
-      };
-
-      window.addEventListener('resize', listener);
-      return () => window.removeEventListener('resize', listener);
-    },
-    [index]
-  );
-
   const rotateMap = {
     0: 90,
-    1: 180,
+    1: 0,
     2: -90
   };
   const cardCount = Math.max(count || 0, (cards || []).length);
-  const position = (size - cardSize) / Math.max(cardCount - 1, 4);
   const renderedCards = [];
   const rotate = rotateMap[index];
   for (let i = 0; i < cardCount; i++) {
-    let style;
-    if (index === 1 || index === 3) {
-      style = { left: i * position };
-    } else {
-      style = { top: i * position };
-    }
-    if (index === 2 || index === 1) {
-      style.zIndex = -i;
-    }
     if (i < (cards || []).length) {
-      renderedCards.push(<li key={i} ref={i === 0 ? firstCardCallback : undefined} style={style}><Card card={cards[i]} rotate={rotate} /></li>);
+      renderedCards.push(<li key={i}><Card card={cards[i]} rotate={rotate} /></li>);
     } else {
-      renderedCards.push(<li key={i} ref={i === 0 ? firstCardCallback : undefined} style={style}><Card back rotate={rotate} /></li>);
+      renderedCards.push(<li key={i}><Card back rotate={rotate} /></li>);
     }
   }
 
@@ -84,7 +39,7 @@ export function PlayerHand ({ userInfo, index, playerNumber, hand, cribOwner, tu
           </header>
         </div>
         <div className='cards-wrapper'>
-          <ul className='cards' ref={cardsCallback}>
+          <ul className='cards'>
             {renderedCards.length ? null : <li className='space-holder'><Card back /></li>}
             {renderedCards}
           </ul>

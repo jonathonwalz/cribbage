@@ -402,14 +402,20 @@ $hand-background: rgba(255, 255, 255, .2);
   }
   .cards {
     position: relative;
+    display: flex;
     width: 100%;
     height: 100%;
     z-index: 0;
 
-    > li, svg {
-      position: absolute;
-      display: block;
-      position: absolute;
+    > li {
+      position: relative;
+      flex: 1 1 auto;
+      &:last-of-type {
+        flex: 1 0 auto;
+      }
+      > .card {
+        position: absolute;
+      }
     }
   }
 
@@ -454,16 +460,17 @@ $hand-background: rgba(255, 255, 255, .2);
       width: 200%;
       height: 100%;
     }
+    .cards {
+      flex-direction: column;
+    }
     .cards > li {
-      height: $card-width;
-      @media (min-width:768px) and (min-height: 700px) {
-        height: $large-card-width;
+      &, .card {
+        height: $card-width;
+        @media (min-width:768px) and (min-height: 700px) {
+          height: $large-card-width;
+        }
       }
       width: 100%;
-
-      svg {
-        height: 100%;
-      }
     }
   }
   &:nth-child(1) {
@@ -480,7 +487,7 @@ $hand-background: rgba(255, 255, 255, .2);
     .cards-wrapper {
       right: 1rem;
     }
-    .cards > li, svg {
+    .cards > li .card {
       right: 0;
     }
   }
@@ -498,8 +505,19 @@ $hand-background: rgba(255, 255, 255, .2);
     .cards-wrapper {
       left: 1rem;
     }
-    .cards > li, svg {
-      left: 0;
+    .cards {
+      flex-direction: column-reverse;
+      > li {
+        &:last-of-type {
+          flex: 1 1 auto;
+        }
+        &:first-of-type {
+          flex: 1 0 auto;
+        }
+        .card {
+          left: 0;
+        }
+      }
     }
   }
 
@@ -531,18 +549,17 @@ $hand-background: rgba(255, 255, 255, .2);
       width: 100%;
       height: 200%;
     }
-
+    .cards {
+      flex-direction: row;
+    }
     .cards > li {
-      width: $card-width;
-      @media (min-width:350px) {
-        width: $large-card-width;
+      &, .card {
+        width: $card-width;
+        @media (min-width:350px) {
+          width: $large-card-width;
+        }
       }
       height: 100%;
-
-      svg {
-        width: 100%;
-        position: absolute;
-      }
     }
   }
 
@@ -559,10 +576,10 @@ $hand-background: rgba(255, 255, 255, .2);
       bottom: 1rem;
     }
 
-    .cards > li {
-      bottom: 0;
-      svg {
-        bottom: 0;
+    .cards > li { 
+      overflow-y: hidden;
+      .card {
+        top: calc(100% - 2rem);
       }
     }
   }
@@ -577,12 +594,8 @@ $hand-background: rgba(255, 255, 255, .2);
     .cards-wrapper {
       top: 1rem;
     }
-
-    .cards > li {
+    .cards > li .card {
       top: 0;
-      svg {
-        top: 0;
-      }
     }
   }
 
