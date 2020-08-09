@@ -21,6 +21,16 @@ for (const suit of ['club', 'diamond', 'heart', 'spade']) {
   }
 }
 
+function canHandPlay (hand, playTotal) {
+  for (let i = 0; i < hand.length; i++) {
+    if (playTotal + Math.min(hand[i].value, 10) <= 31) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
 const rooms = new Map();
 const createRoom = (id = uuid()) => {
   const connectionMap = new Map();
@@ -39,7 +49,8 @@ const createRoom = (id = uuid()) => {
   let playTotal = 0;
   let goCount = 0;
   const settings = {
-    contextMenuAsClick: false
+    contextMenuAsClick: false,
+    autoGo: false
   };
   function resetPlay () {
     resetDeck();
@@ -87,7 +98,7 @@ const createRoom = (id = uuid()) => {
         hands[user] = (hands[user] || []);
         hands[user].push(card);
 
-        setTimeout(deal, 750);
+        setTimeout(deal, 450);
       }
       sendState();
     }
@@ -172,6 +183,9 @@ const createRoom = (id = uuid()) => {
             case 'contextMenuAsClick':
               settings.contextMenuAsClick = !!value;
               break;
+            case 'autoGo':
+              settings.autoGo = !!value;
+              break;
             default:
               break;
           }
@@ -214,10 +228,8 @@ const createRoom = (id = uuid()) => {
         let card;
         const hand = hands[user] || [];
         if (phase === 'play' && message.go) {
-          for (let i = 0; i < hand.length; i++) {
-            if (playTotal + Math.min(hand[i].value, 10) <= 31) {
-              return;
-            }
+          if (canHandPlay(hand, playTotal)) {
+            return;
           }
         } else {
           for (let i = 0; i < hand.length; i++) {
@@ -278,7 +290,7 @@ const createRoom = (id = uuid()) => {
               }
             }
 
-            while ((hands[order[turn]] || []).length === 0) {
+            while (!canHandPlay(hands[order[turn]] || [], settings.autoGo ? playTotal : 0)) {
               turn = (turn + 1) % 4;
               goCount++;
               if (goCount === 4) {

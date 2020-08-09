@@ -253,6 +253,13 @@ function Options ({ order, watchers, userInfo, isShowingOptions, settings, dispa
     [dispatch]
   );
 
+  const handleSetAutoGo = React.useCallback(
+    ({ target: { checked } }) => {
+      dispatch({ type: 'settings', settings: { autoGo: checked } });
+    },
+    [dispatch]
+  );
+
   const handleReorderPlayer = React.useCallback(
     event => {
       const index = parseInt(event.currentTarget.getAttribute('data-index'), 10);
@@ -286,7 +293,8 @@ function Options ({ order, watchers, userInfo, isShowingOptions, settings, dispa
         ))}
       </ol>
       <button onClick={handleSetPlayer}>Set Players</button>
-      <label className='right-click'><input type='checkbox' checked={!!settings.contextMenuAsClick} onChange={handleSetContextMenuAsClick} /> Disable right click for all players and treat it as a click for game actions.</label>
+      <label className='checkbox-setting'><input type='checkbox' checked={!!settings.contextMenuAsClick} onChange={handleSetContextMenuAsClick} /> Disable right click for all players and treat it as a click for game actions.</label>
+      <label className='checkbox-setting'><input type='checkbox' checked={!!settings.autoGo} onChange={handleSetAutoGo} /> Automatically skip players with a "go".</label>
     </>
   );
 }
