@@ -9,7 +9,7 @@ import { Cards, useRadioCards } from './Cards';
 import { Card, MiniCard } from './Card';
 import { UserInfo } from './UserInfo';
 
-export function PlayerHand ({ userInfo, index, hand, cribOwner, turn }) {
+export function PlayerHand ({ userInfo, playerNumber, index, hand, cribOwner, turn }) {
   const { cards, count } = hand || {};
   const { name } = userInfo || {};
 
@@ -34,7 +34,7 @@ export function PlayerHand ({ userInfo, index, hand, cribOwner, turn }) {
       <div className='hand-wrapper'>
         <div className='name-wrapper'>
           <header>
-            <h3>{name || `Player ${index}`}</h3>
+            <h3>{name || `Player ${playerNumber}`}</h3>
             {cribOwner ? <span className='owns-crib'><FontAwesomeIcon icon={faCrown} /></span> : null}
           </header>
         </div>
@@ -49,7 +49,11 @@ export function PlayerHand ({ userInfo, index, hand, cribOwner, turn }) {
   );
 }
 
-function Scores ({ userInfo, teams, scores }) {
+function Scores ({ userInfo, gameMode, order, scores }) {
+  const teams = ((gameMode || {}).teams || [])
+    .map(playerIndexes => playerIndexes.map(i => order[i]).filter(i => i))
+    .filter(a => a.length);
+
   const scoreSums = {};
   const userTeamMap = {};
   for (let i = 0; i < teams.length; i++) {
@@ -81,9 +85,8 @@ function Scores ({ userInfo, teams, scores }) {
 
 export function Game ({ user }) {
   const state = React.useContext(RoomContext);
-  const { hands, dispatch, cut, phase, play, cribOwner, turn, playTotal, scores, settings } = state;
+  const { hands, dispatch, cut, phase, play, cribOwner, turn, playTotal, scores, settings, gameMode } = state;
   const order = state.order || [];
-  const teams = [[order[0], order[2]].filter(i => i), [order[1], order[3]].filter(i => i)].filter(a => a.length);
   const crib = state.crib || [];
   const userInfo = state.userInfo || {};
   const { contextMenuAsClick } = settings || {};
@@ -126,16 +129,21 @@ export function Game ({ user }) {
       index = (myIndex + i + 1) % order.length;
     }
 
+    if ((gameMode.players === 2 && i === (myIndex === undefined ? 1 : 0)) || (myIndex !== undefined && gameMode.players === 3 && i === 1)) {
+      handsToRender.push(<li style={{ display: 'none' }} />);
+    }
+
     const user = order[index];
     const usersHand = (hands || {})[user];
     handsToRender.push(
       <PlayerHand
         key={i}
-        index={i}
+        index={handsToRender.length}
+        playerNumber={i + 1}
         userInfo={userInfo[user]}
         hand={usersHand}
         cribOwner={user === cribOwner}
-        turn={phase === 'play' ? user === turn : (phase === 'crib' && (usersHand || {}).count === 5)}
+        turn={phase === 'play' ? user === turn : (phase === 'crib' && (usersHand || {}).count > 4)}
       />
     );
   }
@@ -166,7 +174,7 @@ export function Game ({ user }) {
     [dispatch, phase]
   );
 
-  let canPlay = phase === 'crib' && hand.length === 5;
+  let canPlay = phase === 'crib' && hand.length > 4;
   if (phase === 'play' && turn === user) {
     for (let i = 0; i < hand.length; i++) {
       if (playTotal + Math.min(hand[i].value, 10) <= 31) {
@@ -183,7 +191,7 @@ export function Game ({ user }) {
       <button type='button' className='options' onClick={handleShowModal}><FontAwesomeIcon icon={faCog} /><span className='sr-only'>Options</span></button>
       <Modal isOpen={isShowingOptions} onRequestClose={handleHideModal}>
         <button onClick={handleHideModal}>Close Options</button>
-        <Options order={order} watchers={watchers} userInfo={userInfo} dispatch={dispatch} isShowingOptions={isShowingOptions} settings={settings} localShowScores={localShowScores} setLocalShowScores={setLocalShowScores} />
+        <Options order={order} gameMode={gameMode} watchers={watchers} userInfo={userInfo} dispatch={dispatch} isShowingOptions={isShowingOptions} settings={settings} localShowScores={localShowScores} setLocalShowScores={setLocalShowScores} />
       </Modal>
       <section className={'hand player' + (!canPlay && phase !== 'count' ? ' disabled' : '') + (hasAction ? ' has-action' : '')}>
         <header>
@@ -227,7 +235,7 @@ export function Game ({ user }) {
               </>
             )}
             <button
-              disabled={phase !== 'cut' && phase !== 'count' && phase !== 'crib' && phase !== 'pre-shuffle'}
+              disabled={(phase === 'pre-shuffle' && order.length !== gameMode.players) || (phase !== 'cut' && phase !== 'count' && phase !== 'crib' && phase !== 'pre-shuffle')}
               onClick={handleCutShuffle}
               onContextMenu={handleCutShuffle}
               className={phase === 'cut' || phase === 'count' || phase === 'pre-shuffle' ? 'has-action' : undefined}
@@ -255,7 +263,7 @@ export function Game ({ user }) {
           {!showScores ? null : (
             <section className='scores'>
               <h2>Scores</h2>
-              <Scores userInfo={userInfo} teams={teams} scores={scores} />
+              <Scores userInfo={userInfo} order={order} gameMode={gameMode} scores={scores} />
             </section>
           )}
         </div>
@@ -273,21 +281,22 @@ export function Game ({ user }) {
   );
 }
 
-function Options ({ order, watchers, userInfo, isShowingOptions, settings, setLocalShowScores, localShowScores, dispatch }) {
+function Options ({ order, gameMode, watchers, userInfo, isShowingOptions, settings, setLocalShowScores, localShowScores, dispatch }) {
   const [allOrder, setAllOrder] = React.useState([...order, ...watchers]);
   settings = settings || {};
 
   const handleSetPlayer = React.useCallback(
     () => {
-      dispatch({ type: 'order', order: allOrder.slice(0, 4) });
+      dispatch({ type: 'order', order: allOrder.slice(0, gameMode.players) });
     },
-    [dispatch, allOrder]
+    [dispatch, allOrder, gameMode]
   );
   React.useEffect(
     () => { setAllOrder(null); },
     [isShowingOptions]
   );
 
+  const handleChangeGameMode = ({ target: { value } }) => dispatch({ type: 'settings', settings: { gameMode: value } });
   const handleCheckboxSettingFactory = setting => ({ target: { checked } }) => {
     dispatch({ type: 'settings', settings: { [setting]: checked } });
   };
@@ -320,7 +329,7 @@ function Options ({ order, watchers, userInfo, isShowingOptions, settings, setLo
       <h2>Player Order</h2>
       <ol>
         {allOrder.map((u, i) => (
-          <li key={u} className={allOrder.indexOf(u) < 4 ? undefined : 'watcher'}>
+          <li key={u} className={allOrder.indexOf(u) < gameMode.players ? undefined : 'watcher'}>
             {(userInfo[u] || {}).name || u}
             {i === 0 ? null : <button type='button' onClick={handleReorderPlayer} data-index={i} data-dir='u'><FontAwesomeIcon icon={faArrowCircleUp} /><span className='sr-only'>Move Up</span></button>}
             {i === allOrder.length - 1 ? null : <button type='button' onClick={handleReorderPlayer} data-index={i} data-dir='d'><FontAwesomeIcon icon={faArrowCircleDown} /><span className='sr-only'>Move Down</span></button>}
@@ -328,6 +337,16 @@ function Options ({ order, watchers, userInfo, isShowingOptions, settings, setLo
         ))}
       </ol>
       <button onClick={handleSetPlayer}>Set Players</button>
+      <label className='select-setting'>
+        {'Number of players: '}
+        <select value={settings.gameMode || '4'} onChange={handleChangeGameMode}>
+          <option value='2'>2</option>
+          <option value='3'>3</option>
+          <option value='4'>4</option>
+          <option value='4-no-team'>4 (no teams)</option>
+        </select>
+      </label>
+
       <label className='checkbox-setting'><input type='checkbox' checked={localShowScoresChecked} onChange={handleToggleShowScoresLocally} /> Show scores.</label>
       <label className='checkbox-setting'><input type='checkbox' checked={!!settings.contextMenuAsClick} onChange={handleCheckboxSettingFactory('contextMenuAsClick')} /> Disable right click for all players and treat it as a click for game actions.</label>
       <label className='checkbox-setting'><input type='checkbox' checked={!!settings.autoGo} onChange={handleCheckboxSettingFactory('autoGo')} /> Automatically skip players with a "go".</label>

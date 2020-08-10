@@ -183,7 +183,7 @@ function getScore (cards, cut, isCrib) {
     cards = cardsWithCut;
   }
 
-  const fifteens = isPegging ? 0 : getFifteens(cards);
+  const fifteens = isPegging ? [] : getFifteens(cards);
   const runs = getRuns(cards, isPegging);
   const pairs = getPairs(cards, isPegging);
 
@@ -204,6 +204,33 @@ function getScore (cards, cut, isCrib) {
   };
 }
 
+const gameModes = {
+  4: {
+    players: 4,
+    teams: [[0, 2], [1, 3]],
+    playerCribDiscards: [1, 1, 1, 1],
+    dealToCrib: 0
+  },
+  '4-no-team': {
+    players: 4,
+    teams: [[0], [1], [2], [3]],
+    playerCribDiscards: [1, 1, 1, 1],
+    dealToCrib: 0
+  },
+  3: {
+    players: 3,
+    teams: [[0], [1], [2]],
+    playerCribDiscards: [1, 1, 1],
+    dealToCrib: 1
+  },
+  2: {
+    players: 2,
+    teams: [[0], [1]],
+    playerCribDiscards: [2, 2],
+    dealToCrib: 0
+  }
+};
+
 const rooms = new Map();
 const createRoom = (id = uuid()) => {
   const connectionMap = new Map();
@@ -222,12 +249,15 @@ const createRoom = (id = uuid()) => {
   let turn = null;
   let playTotal = 0;
   let goCount = 0;
+  let gameMode = gameModes[4];
   const settings = {
     contextMenuAsClick: false,
     autoGo: true,
-    showScores: false
+    showScores: false,
+    gameMode: '4'
   };
   function resetPlay () {
+    phase = 'pre-shuffle';
     resetDeck();
     cribOwner = null;
     scores = [];
@@ -254,26 +284,32 @@ const createRoom = (id = uuid()) => {
     if (cribOwner === null) {
       cribOwner = 0;
     } else {
-      cribOwner = (cribOwner + 1) % 4;
+      cribOwner = (cribOwner + 1) % gameMode.players;
     }
 
-    turn = (cribOwner + 1) % 4;
-    let count = 5;
-    let currentUser = 0;
+    turn = (cribOwner + 1) % gameMode.players;
+    const dealtRemaining = gameMode.playerCribDiscards.map(x => x + 4);
+    let cribCount = gameMode.dealToCrib;
+    let currentUser = cribOwner;
     function deal () {
-      if (currentUser === order.length) {
-        currentUser = 0;
-        count--;
-      }
-
-      if (count === 0) {
+      if (cribCount === 0 && dealtRemaining.every(c => c === 0)) {
         phase = 'crib';
       } else {
-        const user = order[(cribOwner + currentUser++ + 1) % 4];
-        const card = deck.pop();
-        hands[user] = (hands[user] || []);
-        hands[user].push(card);
+        if (!dealtRemaining.some(c => c)) {
+          const card = deck.pop();
+          crib.push({ card });
+          cribCount--;
+        } else {
+          do {
+            currentUser = (currentUser + 1) % gameMode.players;
+          } while (!dealtRemaining[currentUser]);
+          dealtRemaining[currentUser]--;
 
+          const user = order[currentUser];
+          const card = deck.pop();
+          hands[user] = (hands[user] || []);
+          hands[user].push(card);
+        }
         setTimeout(deal, 450);
       }
       sendState();
@@ -301,7 +337,8 @@ const createRoom = (id = uuid()) => {
       playTotal,
       scores,
       deck: deck.length,
-      settings
+      settings,
+      gameMode
     };
 
     for (const [conn, user] of connectionMap) {
@@ -374,6 +411,25 @@ const createRoom = (id = uuid()) => {
             case 'showScores':
               settings.showScores = !!value;
               break;
+            case 'gameMode':
+              if (gameModes[value]) {
+                settings.gameMode = value;
+                gameMode = gameModes[value];
+                if (gameMode.players < order.length) {
+                  order = order.slice(0, gameMode.players);
+                } else if (gameMode.players > order.length) {
+                  for (const u of Object.keys(userInfo)) {
+                    if (!order.includes(u)) {
+                      order.push(u);
+                      if (order.length === gameMode.players) {
+                        break;
+                      }
+                    }
+                  }
+                }
+                resetPlay();
+              }
+              break;
             default:
               break;
           }
@@ -398,18 +454,18 @@ const createRoom = (id = uuid()) => {
         }
       } else if (message.type === 'order') {
         const users = new Set(connectionMap.values());
-        if (message.order.length !== 4 || message.order.some(u => !users.has(u) && !userInfo[u])) {
+        if (message.order.length !== gameMode.players || message.order.some(u => !users.has(u) && !userInfo[u])) {
           return;
         }
 
         order = message.order;
-        phase = 'pre-shuffle';
         resetPlay();
       } else if (message.type === 'play') {
-        if (!order.includes(user) || (phase !== 'crib' && phase !== 'play')) {
+        const playerIndex = order.indexOf(user);
+        if (playerIndex < 0 || (phase !== 'crib' && phase !== 'play')) {
           return;
         }
-        if (phase === 'crib' && crib.some(c => c.user === user)) {
+        if (phase === 'crib' && crib.reduce((a, c) => c.user === user ? a + 1 : a, 0) >= gameMode.playerCribDiscards[playerIndex]) {
           return;
         }
         if (phase === 'play' && turn !== order.indexOf(user)) {
@@ -449,7 +505,7 @@ const createRoom = (id = uuid()) => {
         } else if (phase === 'play') {
           let hasCard = false;
 
-          turn = (turn + 1) % 4;
+          turn = (turn + 1) % gameMode.players;
 
           for (const h of Object.values(hands)) {
             if (h && h.length) {
@@ -479,15 +535,15 @@ const createRoom = (id = uuid()) => {
             for (const { card, user } of play) {
               hands[user].unshift(card);
             }
-            for (let i = 1; i <= 4; i++) {
-              const player = order[(cribOwner + i) % 4];
+            for (let i = 1; i <= gameMode.players; i++) {
+              const player = order[(cribOwner + i) % gameMode.players];
               addScore(player, getScore(hands[player], cut));
             }
             addScore(order[cribOwner], getScore(crib, cut, true));
           } else {
             if (!card) {
               goCount++;
-              if (goCount === 4) {
+              if (goCount === gameMode.players) {
                 goCount = 0;
                 (play[0] || {}).lastCard = true;
                 const lastCardUser = (play[0] || {}).user;
@@ -497,9 +553,9 @@ const createRoom = (id = uuid()) => {
             }
 
             while (!canHandPlay(hands[order[turn]] || [], settings.autoGo ? playTotal : 0)) {
-              turn = (turn + 1) % 4;
+              turn = (turn + 1) % gameMode.players;
               goCount++;
-              if (goCount === 4) {
+              if (goCount === gameMode.players) {
                 goCount = 0;
                 (play[0] || {}).lastCard = true;
                 const lastCardUser = (play[0] || {}).user;
@@ -530,7 +586,7 @@ const createRoom = (id = uuid()) => {
       userInfo[user] = { name };
     }
 
-    if (order.length < 4 && !order.includes(user)) {
+    if (order.length < gameMode.players && !order.includes(user)) {
       order.push(user);
     }
 

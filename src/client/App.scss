@@ -838,9 +838,9 @@ button.options {
     margin-top: 0;
   }
 
-  .checkbox-setting {
+  .checkbox-setting, .select-setting {
     display: block;
-    &:first-of-type, &:nth-of-type(2) {
+    &:first-of-type, &:nth-of-type(2), &:nth-of-type(3) {
       margin-top: 2rem;
     }
   }
