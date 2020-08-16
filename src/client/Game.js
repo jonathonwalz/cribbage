@@ -83,6 +83,57 @@ function Scores ({ userInfo, gameMode, order, scores }) {
   );
 }
 
+function ScoresTable ({ userInfo, gameMode, order, scores }) {
+  const teams = ((gameMode || {}).teams || [])
+    .map(playerIndexes => playerIndexes.map(i => order[i]).filter(i => i))
+    .filter(a => a.length);
+
+  const scoreSums = {};
+  const userTeamMap = {};
+  for (let i = 0; i < teams.length; i++) {
+    scoreSums[i] = 0;
+    for (const user of teams[i]) {
+      userTeamMap[user] = i;
+    }
+  }
+
+  const rows = [];
+  for (const { user, value, during, type, isCrib, cards, fifteens, runs, pairs, flush, nobs } of (scores || [])) {
+    scoreSums[userTeamMap[user]] += value;
+    if (scoreSums[userTeamMap[user]] >= 121) {
+      scoreSums[userTeamMap[user]] = 121;
+      break;
+    }
+    rows.push(
+      <React.Fragment key={rows.length}>
+        <tr>
+          <td rowSpan={2}>{(userInfo[user] || {}).name || user}</td>
+          <td rowSpan={2}>{during === 'play' ? 'Pegging' : (isCrib ? 'Crib' : 'Hand')} {type}</td>
+          <td>{JSON.stringify({ cards })}</td>
+          <td rowSpan={2}>{value}</td>
+          <td rowSpan={2}>{scoreSums[userTeamMap[user]]}</td>
+        </tr>
+        <tr>
+          <td>{JSON.stringify({ type, fifteens, runs, pairs, flush, nobs })}</td>
+        </tr>
+      </React.Fragment>
+    );
+  }
+
+  return (
+    <table>
+      <tr>
+        <th>Player</th>
+        <th>Event</th>
+        <th>Cards and Score Breakdown</th>
+        <th>Points</th>
+        <th>Team Total</th>
+      </tr>
+      {rows}
+    </table>
+  );
+}
+
 export function Game ({ user }) {
   const state = React.useContext(RoomContext);
   const { hands, dispatch, cut, phase, play, cribOwner, turn, playTotal, scores, settings, gameMode } = state;
@@ -99,6 +150,10 @@ export function Game ({ user }) {
   const [isShowingOptions, setIsShowingOptions] = React.useState(false);
   const handleShowModal = React.useCallback(() => setIsShowingOptions(true), []);
   const handleHideModal = React.useCallback(() => setIsShowingOptions(false), []);
+
+  const [isShowingScoreDetails, setIsShowingScoreDetails] = React.useState(false);
+  const handleShowScoreDetails = React.useCallback(() => setIsShowingScoreDetails(true), []);
+  const handleHideScoreDetails = React.useCallback(() => setIsShowingScoreDetails(false), []);
 
   React.useEffect(
     () => {
@@ -263,6 +318,11 @@ export function Game ({ user }) {
           {!showScores ? null : (
             <section className='scores'>
               <h2>Scores</h2>
+              <button type='button' onClick={handleShowScoreDetails}>Show score details</button>
+              <Modal isOpen={isShowingScoreDetails} onRequestClose={handleHideScoreDetails}>
+                <button onClick={handleHideScoreDetails}>Close Score Details</button>
+                <ScoresTable userInfo={userInfo} gameMode={gameMode} order={order} scores={scores} />
+              </Modal>
               <Scores userInfo={userInfo} order={order} gameMode={gameMode} scores={scores} />
             </section>
           )}
