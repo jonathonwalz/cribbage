@@ -131,19 +131,20 @@ function getScore (cards, cut, isCrib) {
   const isPegging = !cut;
   let flush = [];
   let nobs;
+  let cardsToScore = cards;
   if (isPegging) {
     const previousPlayIndex = cards.findIndex(({ lastCard }) => lastCard);
     if (previousPlayIndex === 0) {
       return 0;
     }
 
-    cards = cards.slice(0, previousPlayIndex < 0 ? undefined : previousPlayIndex).map(({ card }) => card);
+    cardsToScore = cards.slice(0, previousPlayIndex < 0 ? undefined : previousPlayIndex).map(({ card }) => card);
   } else {
     if (isCrib) {
       cards = cards.map(({ card }) => card);
     }
 
-    const cardsWithCut = cards = [...cards, cut];
+    const cardsWithCut = [...cards, cut];
     const testSuit = (cards[0] || {}).suit;
     const isFlush = cards.every(({ suit }) => suit === testSuit);
     if (isFlush) {
@@ -151,12 +152,12 @@ function getScore (cards, cut, isCrib) {
     }
 
     nobs = cards.find(({ suit, value }) => value === 11 && suit === cut.suit);
-    cards = cardsWithCut;
+    cardsToScore = cardsWithCut;
   }
 
-  const fifteens = isPegging ? [] : getFifteens(cards);
-  const runs = getRuns(cards, isPegging);
-  const pairs = getPairs(cards, isPegging);
+  const fifteens = isPegging ? [] : getFifteens(cardsToScore);
+  const runs = getRuns(cardsToScore, isPegging);
+  const pairs = getPairs(cardsToScore, isPegging);
 
   return {
     durning: isPegging ? 'play' : 'count',
@@ -171,7 +172,8 @@ function getScore (cards, cut, isCrib) {
     flush,
     nobs,
     isCrib,
-    cards
+    cards,
+    cut
   };
 }
 
