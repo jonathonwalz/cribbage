@@ -58,7 +58,7 @@ export function SocketProvider ({ children }) {
         do {
           await new Promise(createSocket);
           await new Promise(resolve => setTimeout(resolve, 1000 * connectionTimeout)); // eslint-disable-line no-loop-func
-          connectionTimeout *= 2;
+          connectionTimeout = Math.min(2 * connectionTimeout, 120);
         } while (!cleaningUp); // eslint-disable-line no-unmodified-loop-condition
       })().catch(error => {
         socketState.error = error;
