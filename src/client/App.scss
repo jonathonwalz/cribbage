@@ -1,6 +1,7 @@
+@use 'sass:math';
 @import-normalize;
 
-$card-aspect-ratio: 169.075 / 244.64;
+$card-aspect-ratio: math.div(169.075, 244.64);
 
 html {
   box-sizing: border-box;
@@ -487,7 +488,7 @@ $hand-background: rgba(255, 255, 255, .2);
     border-top-left-radius: 0;
     border-bottom-left-radius: 0;
     .name-wrapper {
-      right: -$name-wrapper-width / 2 + 0.5rem;
+      right: #{math.div(-$name-wrapper-width, 2rem + 0.5rem)}rem;
     }
     header {
       transform: rotate(90deg);
@@ -505,7 +506,7 @@ $hand-background: rgba(255, 255, 255, .2);
     border-top-right-radius: 0;
     border-bottom-right-radius: 0;
     .name-wrapper {
-      left: -$name-wrapper-width / 2 + 0.5rem;
+      left: #{math.div(-$name-wrapper-width, 2rem + 0.5rem)}rem;
     }
     header {
       transform: rotate(270deg);

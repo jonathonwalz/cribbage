@@ -1,4 +1,4 @@
-FROM node:12-alpine AS base
+FROM node:14-alpine AS base
 
 RUN mkdir -p /opt/app
 WORKDIR /opt/app
@@ -8,8 +8,8 @@ COPY package.json package-lock.json ./
 FROM base AS build
 
 RUN npm ci --development && \
-  mkdir /opt/app/build && \
-  chown node /opt/app/build
+  mkdir /opt/app/build /opt/app/node_modules/.cache && \
+  chown node /opt/app/build /opt/app/node_modules/.cache
 
 COPY . /opt/app
 USER node

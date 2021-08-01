@@ -6,7 +6,7 @@ import { HashRouter as Router, Route, Switch, Redirect } from 'react-router-dom'
 import { v4 as uuid } from 'uuid';
 import Cookies from 'js-cookie';
 
-import 'typeface-roboto';
+import '@fontsource/roboto';
 import './App.scss';
 
 import { SocketProvider } from './Socket';

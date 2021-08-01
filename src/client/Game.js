@@ -122,14 +122,18 @@ function ScoresTable ({ userInfo, gameMode, order, scores }) {
 
   return (
     <table>
-      <tr>
-        <th>Player</th>
-        <th>Event</th>
-        <th>Cards and Score Breakdown</th>
-        <th>Points</th>
-        <th>Team Total</th>
-      </tr>
-      {rows}
+      <thead>
+        <tr>
+          <th>Player</th>
+          <th>Event</th>
+          <th>Cards and Score Breakdown</th>
+          <th>Points</th>
+          <th>Team Total</th>
+        </tr>
+      </thead>
+      <tbody>
+        {rows}
+      </tbody>
     </table>
   );
 }
@@ -185,7 +189,7 @@ export function Game ({ user }) {
     }
 
     if ((gameMode.players === 2 && i === (myIndex === undefined ? 1 : 0)) || (myIndex !== undefined && gameMode.players === 3 && i === 1)) {
-      handsToRender.push(<li style={{ display: 'none' }} />);
+      handsToRender.push(<li key={-i - 1} style={{ display: 'none' }} />);
     }
 
     const user = order[index];
