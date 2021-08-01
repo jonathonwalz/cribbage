@@ -349,7 +349,9 @@ const createRoom = (id = uuid()) => {
 
             if (playTotal === 15) {
               addScore(user, { value: 2, type: '15', during: 'play' });
-            } else if (playTotal === 31) {
+            }
+
+            if (playTotal === 31) {
               (play[0] || {}).lastCard = true;
               addScore(user, { value: 2, type: '31', during: 'play' });
               playTotal = 0;
