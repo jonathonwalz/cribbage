@@ -102,22 +102,25 @@ function ScoresTable ({ userInfo, gameMode, order, scores }) {
     scoreSums[userTeamMap[user]] += value;
     if (scoreSums[userTeamMap[user]] >= 121) {
       scoreSums[userTeamMap[user]] = 121;
-      break;
     }
     rows.push(
       <React.Fragment key={rows.length}>
-        <tr>
+        <tr style={{ backgroundColor: rows.length % 2 === 1 ? '#eee' : '#fff' }}>
           <td rowSpan={2}>{(userInfo[user] || {}).name || user}</td>
           <td rowSpan={2}>{during === 'play' ? 'Pegging' : (isCrib ? 'Crib' : 'Hand')} {type}</td>
           <td>{JSON.stringify({ cards })}</td>
           <td rowSpan={2}>{value}</td>
           <td rowSpan={2}>{scoreSums[userTeamMap[user]]}</td>
         </tr>
-        <tr>
+        <tr style={{ backgroundColor: rows.length % 2 === 1 ? '#eee' : '#fff' }}>
           <td>{JSON.stringify({ type, fifteens, runs, pairs, flush, nobs })}</td>
         </tr>
       </React.Fragment>
     );
+
+    if (scoreSums[userTeamMap[user]] >= 121) {
+      break;
+    }
   }
 
   return (

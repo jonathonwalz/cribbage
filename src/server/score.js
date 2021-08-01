@@ -160,7 +160,7 @@ function getScore (cards, cut, isCrib) {
   const pairs = getPairs(cardsToScore, isPegging);
 
   return {
-    durning: isPegging ? 'play' : 'count',
+    during: isPegging ? 'play' : 'count',
     value: (fifteens.length * 2) +
       runs.reduce((a, v) => a + v.length, 0) +
       Object.values(pairs).reduce((a, cards) => a + pairCountScores[cards.length], 0) +
